@@ -18,8 +18,9 @@ public struct ShaderModifier: NodeModifier {
   
   public func drawCommands(content: any Node) -> [any MetalDrawable] {    
     return content.drawCommands.map {
-      if let cmd = $0 as? any HasShaderPipeline {
-        return cmd.withUpdated(shaderPipeline: shader)
+      if var cmd = $0 as? (any HasShaderPipeline & MetalDrawable) {
+        cmd.shaderPipeline = shader
+        return cmd
       }
       return $0
     }
@@ -35,8 +36,9 @@ public struct OverrideTexturesModifier: NodeModifier {
 
   public func drawCommands(content: any Node) -> [any MetalDrawable] {
     return content.drawCommands.map {
-      if let cmd = $0 as? RenderModel {
-        return cmd.withUpdated(overrideTextures: override)
+      if var cmd = $0 as? RenderModel {
+        cmd.overrideTextures = override
+        return cmd
       }
       return $0
     }

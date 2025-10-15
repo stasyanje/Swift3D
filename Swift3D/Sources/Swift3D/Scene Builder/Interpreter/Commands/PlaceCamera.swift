@@ -19,48 +19,14 @@ struct ViewProjectionUniform {
 
 // MARK: - Command
 
-struct PlaceCamera: MetalDrawable, HasShaderPipeline {
-  let id: String
-  let transform: MetalDrawableData.Transform
-  let projection: CameraProjection
-  let shaderPipeline: (any MetalDrawable_Shader)?
-  let animations: [NodeTransition]?
-
+struct PlaceCamera: MetalDrawable {
+  var id: String
+  var transform: MetalDrawableData.Transform
+  var projection: CameraProjection
+  var shaderPipeline: (any MetalDrawable_Shader)?
+  var animations: [NodeTransition]?
+  
   let storage: PlaceCamera.Storage
-  
-  
-  func withUpdated(transform: MetalDrawableData.Transform) -> Self {
-    withUpdated(id: nil, animations: nil, transform: transform, shaderPipeline: nil, projection: nil)
-  }
-  
-  func withUpdated(id: String) -> Self {
-    withUpdated(id: id, animations: nil, transform: nil, shaderPipeline: nil, projection: nil)
-  }
-  
-  func withUpdated(animations: [NodeTransition]) -> Self {
-    withUpdated(id: nil, animations: animations, transform: nil, shaderPipeline: nil, projection: nil)
-  }
-
-  func withUpdated(projection: CameraProjection) -> Self {
-    withUpdated(id: nil, animations: animations, transform: nil, shaderPipeline: nil, projection: projection)
-  }
-
-  func withUpdated<Shader: MetalDrawable_Shader>(shaderPipeline: Shader) -> any MetalDrawable {
-    withUpdated(id: nil, animations: nil, transform: nil, shaderPipeline: shaderPipeline, projection: nil)
-  }
-  
-  private func withUpdated(id: String?,
-                           animations: [NodeTransition]?,
-                           transform: MetalDrawableData.Transform?,
-                           shaderPipeline: (any MetalDrawable_Shader)?,
-                           projection: CameraProjection?) -> Self {
-    .init(id: id ?? self.id,
-          transform: transform ?? self.transform,
-          projection: projection ?? self.projection,
-          shaderPipeline: shaderPipeline ?? self.shaderPipeline,
-          animations: animations ?? self.animations,
-          storage: storage)
-  }
 }
 
 // MARK: - Updates

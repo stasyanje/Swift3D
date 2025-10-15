@@ -16,9 +16,10 @@ public struct TransformModifier: NodeModifier {
   }
   
   public func drawCommands(content: any Node) -> [any MetalDrawable] {    
-    return content.drawCommands.map { command in
-      let updatedTransform: MetalDrawableData.Transform = .transform(transform.value * command.transform.value)
-      return command.withUpdated(transform: updatedTransform)
+    content.drawCommands.map { command in
+      var command = command
+      command.transform = .transform(transform.value * command.transform.value)
+      return command
     }
   }
 }

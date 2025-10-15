@@ -12,50 +12,20 @@ import MetalKit
 import simd
 
 protocol HasShaderPipeline {
-  func withUpdated<Shader: MetalDrawable_Shader>(shaderPipeline: Shader) -> any MetalDrawable
+  var shaderPipeline: MetalDrawable_Shader { get set }
 }
 
 // MARK: - NodeRenderCommand
 
 struct RenderGeometry: MetalDrawable, HasShaderPipeline {
-  let id: String
-  let transform: MetalDrawableData.Transform
+  var id: String
+  var transform: MetalDrawableData.Transform
   let geometry: any MetalDrawable_Geometry
-  let shaderPipeline: any MetalDrawable_Shader
-  let renderType: MetalDrawableData.RenderType?  
-  let animations: [NodeTransition]?
+  var shaderPipeline: MetalDrawable_Shader
+  let renderType: MetalDrawableData.RenderType?
+  var animations: [NodeTransition]?
   let storage: RenderGeometry.Storage
   let cullBackfaces: Bool
-
-  func withUpdated(id: String) -> Self {
-    withUpdated(id: id, animations: nil, transform: nil, shaderPipeline: nil)
-  }
-  
-  func withUpdated(transform: MetalDrawableData.Transform) -> Self {
-    withUpdated(id: nil, animations: nil, transform: transform, shaderPipeline: nil)
-  }
-  
-  func withUpdated(animations: [NodeTransition]) -> Self {
-    withUpdated(id: nil, animations: animations, transform: nil, shaderPipeline: nil)
-  }
-  
-  func withUpdated<Shader: MetalDrawable_Shader>(shaderPipeline: Shader) -> any MetalDrawable {
-    withUpdated(id: nil, animations: nil, transform: nil, shaderPipeline: shaderPipeline)
-  }
-  
-  private func withUpdated(id: String?,
-                           animations: [NodeTransition]?,
-                           transform: MetalDrawableData.Transform?,
-                           shaderPipeline: (any MetalDrawable_Shader)?) -> Self {
-      RenderGeometry.init(id: id ?? self.id, 
-                          transform: transform ?? self.transform, 
-                        geometry: self.geometry,
-                          shaderPipeline: shaderPipeline ?? self.shaderPipeline,
-                        renderType: self.renderType, 
-                        animations: animations ?? self.animations, 
-                        storage: self.storage,
-                        cullBackfaces: cullBackfaces)
-  }
 }
 
 // MARK: - Render

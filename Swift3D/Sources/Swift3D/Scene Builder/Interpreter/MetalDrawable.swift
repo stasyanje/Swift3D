@@ -46,16 +46,12 @@ public protocol MetalDrawable_Storage {
 public protocol MetalDrawable {
   associatedtype Storage: MetalDrawable_Storage
   
-  var id: String { get }
-  var transform: MetalDrawableData.Transform { get }
-  var animations: [NodeTransition]? { get }
+  var id: String { get set }
+  var transform: MetalDrawableData.Transform { get set }
+  var animations: [NodeTransition]? { get set }
   
   var storage: Storage { get }
   var needsRender: Bool { get }
-
-  func withUpdated(id: String) -> Self
-  func withUpdated(transform: MetalDrawableData.Transform) -> Self
-  func withUpdated(animations: [NodeTransition]) -> Self
 
   func render(encoder: MTLRenderCommandEncoder, depthStencil: MTLDepthStencilState?)
 }

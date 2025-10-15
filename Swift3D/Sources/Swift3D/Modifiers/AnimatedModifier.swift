@@ -55,10 +55,11 @@ public struct TransitionModifier: NodeModifier {
   }
   
   public func drawCommands(content: any Node) -> [any MetalDrawable] {
-    return content.drawCommands.map { command in
-      var anims: [NodeTransition] = command.animations ?? []
-      anims.append(animation)      
-      return command.withUpdated(animations: anims)
+    content.drawCommands.map { command in
+      var command = command
+      command.animations = command.animations ?? []
+      command.animations?.append(animation)
+      return command
     }
   }
 }

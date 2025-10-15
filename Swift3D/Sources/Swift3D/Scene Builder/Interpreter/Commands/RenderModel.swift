@@ -14,55 +14,13 @@ import simd
 // MARK: - NodeRenderCommand
 
 struct RenderModel: MetalDrawable, HasShaderPipeline {
-  let id: String
-  let transform: MetalDrawableData.Transform
+  var id: String
+  var transform: MetalDrawableData.Transform
   let model: Model
-  let shaderPipeline: any MetalDrawable_Shader
-  let overrideTextures: Bool
-  let animations: [NodeTransition]?
+  var shaderPipeline: MetalDrawable_Shader
+  var overrideTextures: Bool
+  var animations: [NodeTransition]?
   let storage: RenderModel.Storage
-
-
-
-
-  func withUpdated(id: String) -> Self {
-    withUpdated(id: id, animations: nil, transform: nil, overrideTextures: nil)
-  }
-
-  func withUpdated(transform: MetalDrawableData.Transform) -> Self {
-    withUpdated(id: nil, animations: nil, transform: transform, overrideTextures: nil)
-  }
-
-  func withUpdated(animations: [NodeTransition]) -> Self {
-    withUpdated(id: nil, animations: animations, transform: nil, overrideTextures: nil)
-  }
-
-  func withUpdated(overrideTextures: Bool) -> Self {
-    withUpdated(id: nil, animations: animations, transform: nil, overrideTextures: overrideTextures)
-  }
-
-  func withUpdated<Shader: MetalDrawable_Shader>(shaderPipeline: Shader) -> any MetalDrawable {
-    RenderModel(id: id,
-                transform: transform,
-                model: model,
-                shaderPipeline: shaderPipeline,
-                overrideTextures: overrideTextures,
-                animations: animations,
-                storage: storage)
-  }
-
-  private func withUpdated(id: String?,
-                           animations: [NodeTransition]?,
-                           transform: MetalDrawableData.Transform?,
-                           overrideTextures: Bool?) -> Self {
-    RenderModel(id: id ?? self.id,
-                transform: transform ?? self.transform,
-                model: self.model,
-                shaderPipeline: self.shaderPipeline,
-                overrideTextures: overrideTextures ?? self.overrideTextures,
-                animations: animations ?? self.animations,
-                storage: self.storage)
-  }
 }
 
 // MARK: - Render
@@ -148,9 +106,11 @@ extension RenderModel.Storage {
       self.transform = command.transform
     }
 
-    command.shaderPipeline.build(device: device,
-                                 library: shaderLibrary,
-                                 descriptor: meshAndTextures?.vertexDescriptor)
+    command.shaderPipeline.build(
+      device: device,
+      library: shaderLibrary,
+      descriptor: meshAndTextures?.vertexDescriptor
+    )
   }
 
   func copy(from previous: RenderModel.Storage) {

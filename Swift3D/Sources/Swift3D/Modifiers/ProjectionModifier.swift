@@ -16,8 +16,9 @@ public struct ProjectionModifier: NodeModifier {
 
   public func drawCommands(content: any Node) -> [any MetalDrawable] {
     return content.drawCommands.map {
-      if let cmd = $0 as? PlaceCamera {
-        return cmd.withUpdated(projection: value)
+      if var cmd = $0 as? PlaceCamera {
+        cmd.projection = value
+        return cmd
       }
       return $0
     }

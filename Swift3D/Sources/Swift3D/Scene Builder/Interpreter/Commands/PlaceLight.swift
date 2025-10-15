@@ -13,43 +13,15 @@ import simd
 // MARK: - Command
 
 struct PlaceLight: MetalDrawable {
-  let id: String
-  let transform: MetalDrawableData.Transform
+  var id: String
+  var transform: MetalDrawableData.Transform
   
   let type: LightType
-  let color: simd_float4
+  var color: simd_float4
   
-  let animations: [NodeTransition]?
+  var animations: [NodeTransition]?
 
   let storage: PlaceLight.Storage
-  
-  func withUpdated(transform: MetalDrawableData.Transform) -> Self {
-    withUpdated(id: nil, animations: nil, transform: transform, color: nil)
-  }
-  
-  func withUpdated(id: String) -> Self {
-    withUpdated(id: id, animations: nil, transform: nil, color: nil)
-  }
-  
-  func withUpdated(animations: [NodeTransition]) -> Self {
-    withUpdated(id: nil, animations: animations, transform: nil, color: nil)
-  }
-  
-  func withUpdated(color: simd_float4) -> any MetalDrawable {
-    withUpdated(id: nil, animations: nil, transform: nil, color: color)
-  }
-  
-  private func withUpdated(id: String?, 
-                           animations: [NodeTransition]?,
-                           transform: MetalDrawableData.Transform?,
-                           color: simd_float4?) -> Self {
-    .init(id: id ?? self.id,
-          transform: transform ?? self.transform,
-          type: type,
-          color: color ?? self.color,
-          animations: animations ?? self.animations,
-          storage: self.storage)
-  }
 }
 
 // MARK: - Updates

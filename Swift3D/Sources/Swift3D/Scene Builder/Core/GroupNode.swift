@@ -26,8 +26,10 @@ public struct GroupNode<Content>: Node where Content: Node {
   }
   
   public var drawCommands: [any MetalDrawable] {
-    content.drawCommands.map { 
-      $0.withUpdated(id: "\(id).\($0.id)")       
+    content.drawCommands.map { command in
+      var command = command
+      command.id = "\(id).\(command.id)"
+      return command
     }
   }
 }
