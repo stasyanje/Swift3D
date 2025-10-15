@@ -10,12 +10,7 @@ import SwiftUI
 import Swift3D
 import simd
 
-fileprivate class Data {
-  var rotation: Float = 0
-}
-
 struct SeatsSample: View {
-  private let data = Data()
   private let motion = Motion()
   @State var motionActive = false
 

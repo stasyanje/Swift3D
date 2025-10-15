@@ -9,24 +9,23 @@ import Foundation
 import simd
 
 // Handles updating transform values with acceleration & velocity
-class Spring {
+struct Spring {
   let strength: Float
   let damper: Float
 
   var target: simd_float3
+  private var velocity: simd_float3 = .zero
+  
   private(set) var value: simd_float3
-  var velocity: simd_float3 = .zero
 
-  init(target: simd_float3 = .zero,
-       strength: Float = 0.175,
-       damper: Float = 2.5) {
+  init(target: simd_float3, strength: Float, damper: Float) {
     self.target = target
     self.value = target
     self.strength = strength
     self.damper = damper
   }
 
-  func update(deltaTime: CFTimeInterval) {
+  mutating func update(deltaTime: CFTimeInterval) {
     let distanceToTarget = abs(target - value)
     let directionToTarget = normalize(target - value)
     let deltaTimeF = Float(deltaTime)

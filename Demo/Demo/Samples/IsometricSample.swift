@@ -7,22 +7,17 @@ struct Point: Identifiable {
   let position: simd_float3
 }
 
-class PointCloud {
+struct PointCloud {
   let points: [Point]
 
   init(radius: Float = 2, numPoints: Int = 50) {
-    var pointsMut: [Point] = []
-
-    while pointsMut.count < numPoints {
+    self.points = (0..<numPoints).map { index in
       let x = Float.random(in: -radius..<radius)
       let y = Float.random(in: -radius..<radius)
       let z = Float.random(in: -radius..<radius)
-      pointsMut.append(
-        Point(id: "\(pointsMut.count)",
-              position: simd_float3(x: x, y: y, z: z)))
+      
+      return Point(id: String(index), position: simd_float3(x: x, y: y, z: z))
     }
-
-    self.points = pointsMut
   }
 }
 

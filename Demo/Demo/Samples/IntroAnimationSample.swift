@@ -10,24 +10,26 @@ import SwiftUI
 import Swift3D
 import simd
 
-fileprivate var offScreen = simd_float3(x: 0, y: -20, z: -40)
-
 struct IntroAnimationSample: View {
-  private let fastSpring = Spring(target: offScreen, strength: 0.3, damper: 3)
-  private let slowSpring = Spring(target: offScreen)
+  private enum Constants {
+    static let onScreen = simd_float3(x: .pi * 4, y: 0, z: -2.5)
+    static let offScreen = simd_float3(x: 0, y: -20, z: -40)
+  }
+  
+  @State private var fastSpring = Spring(target: Constants.offScreen, strength: 0.3, damper: 3)
+  @State private var slowSpring = Spring(target: Constants.offScreen, strength: 0.175, damper: 2.5)
 
   @State private var rotation: Float = 0
   @State private var show = false
-  private var target: simd_float3 {
-    show ? simd_float3(x: .pi * 4, y: 0, z: -2.5) : offScreen
-  }
 
   var body: some View {
     VStack {
       ZStack {
         Swift3DView(updateLoop: { delta in
+          let target = show ? Constants.onScreen : Constants.offScreen
           slowSpring.target = target
           fastSpring.target = target
+          
           slowSpring.update(deltaTime: delta)
           fastSpring.update(deltaTime: delta)
 
@@ -58,8 +60,7 @@ struct IntroAnimationSample: View {
           Divider()
           Text("for 🚀🚀🚀")
         }
-        .offset(CGSize(width: 0,
-                        height: show ? -UIScreen.main.bounds.height : 0))
+        .offset(CGSize(width: 0, height: show ? -UIScreen.main.bounds.height : 0))
       }
 
     }
@@ -72,10 +73,10 @@ struct IntroAnimationSample: View {
       }
     }
   }
+}
 
-  struct preview: PreviewProvider {
-    static var previews: some View {
-      IntroAnimationSample()
-    }
+private struct Preview: PreviewProvider {
+  static var previews: some View {
+    IntroAnimationSample()
   }
 }

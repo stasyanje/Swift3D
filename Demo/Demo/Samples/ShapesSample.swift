@@ -18,19 +18,17 @@ fileprivate class Data {
 
 struct ShapesSample: View {
   private let data = Data()
-  private let cameraController = TouchCameraController(
-    minDistance: 8, maxDistance: 14)
+  private let cameraController = TouchCameraController(minDistance: 8, maxDistance: 14)
 
   var body: some View {
     ZStack {
       Swift3DView {
-        TouchCamera(controller: cameraController,
-                    skybox: .skybox(.cube("stadiumEnv")))
+        TouchCamera(controller: cameraController, skybox: .skybox(.cube("stadiumEnv")))
       }
       .withCameraControls(controller: cameraController)
       .frame(maxHeight: .infinity)
     }
-/*
+
     VStack {
       Text("🎁 Plenty of shapes to toy around with. ♦️")
       ZStack {
@@ -77,7 +75,7 @@ struct ShapesSample: View {
           .withCameraControls(controller: cameraController)
           .frame(maxHeight: .infinity)
       }
-    }*/
+    }
   }
 
   private var funLights: some Node {
@@ -92,11 +90,11 @@ struct ShapesSample: View {
         .transform(.lookAt(eye: .zero, look: simd_float3(x: -0.5, y: -0.5, z: 0.5), up: .up))
     }
   }
+}
 
-  struct preview: PreviewProvider {
-    static var previews: some View {
-      ShapesSample()
-    }
+private struct Preview: PreviewProvider {
+  static var previews: some View {
+    ShapesSample()
   }
 }
 

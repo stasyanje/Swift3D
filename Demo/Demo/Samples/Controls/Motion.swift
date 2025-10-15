@@ -9,30 +9,9 @@ import Foundation
 import simd
 import CoreMotion
 
-extension BinaryFloatingPoint {
-  var radians : Self {
-    return self * .pi / 180
-  }
-}
-
-extension CMQuaternion {
-  var quatd: simd_quatd {
-    .init(ix: x, iy: y, iz: z, r: w)
-  }
-
-  var quatf: simd_quatf {
-    .init(ix: Float(x), iy: Float(y), iz: Float(z), r: Float(w))
-  }
-}
-
-class Motion {
-  var XOffset: Double = 0.0
-  var YOffset: Double = 0.0
-
+final class Motion {
   private let motionManager = CMMotionManager()
-  private var initialPitch: Double?
-  private var initialRoll: Double?
-
+  
   private var startingAttitude: CMAttitude?
 
   var curAttitude: float4x4 {
@@ -73,5 +52,21 @@ class Motion {
 
   func end() {
     motionManager.stopDeviceMotionUpdates()
+  }
+}
+
+private extension BinaryFloatingPoint {
+  var radians : Self {
+    return self * .pi / 180
+  }
+}
+
+private extension CMQuaternion {
+  var quatd: simd_quatd {
+    .init(ix: x, iy: y, iz: z, r: w)
+  }
+
+  var quatf: simd_quatf {
+    .init(ix: Float(x), iy: Float(y), iz: Float(z), r: Float(w))
   }
 }

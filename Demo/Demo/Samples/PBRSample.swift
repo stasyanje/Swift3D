@@ -11,15 +11,15 @@ import Swift3D
 import simd
 
 struct PBRSample: View {
-  let state = SceneState()
+  @State private var rotation: Float = 0
+  
   let cameraController = TouchCameraController(minDistance: 2, maxDistance: 5)
-  private let motion = Motion()
 
   var body: some View {
     ZStack {
       Swift3DView(updateLoop: { deltaTime in
         cameraController.update(delta: deltaTime)
-        state.rotation += Float(deltaTime) * .pi / 5
+        rotation += Float(deltaTime) * .pi / 5
       }) {
         TouchCamera(controller: cameraController)
         lights
@@ -56,7 +56,7 @@ struct PBRSample: View {
           .scaled(.one * 0.1)
       }
       .translated(.up * 1.5)
-      .rotated(angle: state.rotation, axis: .right)
+      .rotated(angle: rotation, axis: .right)
 
       GroupNode(id: "Green Light") {
         PointLightNode(id: "light")
@@ -67,7 +67,7 @@ struct PBRSample: View {
           .scaled(.one * 0.1)
       }
       .translated(.back * 1.5)
-      .rotated(angle: state.rotation, axis: .up + .left)
+      .rotated(angle: rotation, axis: .up + .left)
 
       GroupNode(id: "Red Light") {
         PointLightNode(id: "light")
@@ -78,13 +78,7 @@ struct PBRSample: View {
           .scaled(.one * 0.1)
       }
       .translated(.forward * 1.5)
-      .rotated(angle: -state.rotation, axis: .up + .right)
+      .rotated(angle: -rotation, axis: .up + .right)
     }
-  }
-}
-
-extension PBRSample {
-  class SceneState {
-    var rotation: Float = 0
   }
 }

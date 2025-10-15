@@ -10,14 +10,10 @@ import SwiftUI
 import Swift3D
 import simd
 
-
-fileprivate class Data {
-  var rotation: Float = 0
-}
-
 struct CowSample: View {
-  private let data = Data()
   private let motion = Motion()
+  
+  @State private var rotation: Float = 0
   
   var body: some View {
     ScrollView {
@@ -35,16 +31,17 @@ struct CowSample: View {
       motion.end()
     }
   }
+  
+  // MARK: - Private
 
-  @ViewBuilder
-  var preamble: some View {
+  @ViewBuilder private var preamble: some View {
     Spacer(minLength: 50)
     Text("Hey, I'm Cow 🐮..")
       .font(.title2)
     Text("Well yes, technically I'm **spot.obj** 🌍")
   }
 
-  var cowScene: some View {
+  private var cowScene: some View {
     Swift3DView {
       CameraNode(id: "mainCam")
         .perspective(fov: 1.5)
@@ -56,24 +53,23 @@ struct CowSample: View {
     .aspectRatio(1, contentMode: .fit)
   }
 
-  var cubeScene: some View {
+  private var cubeScene: some View {
     Swift3DView(updateLoop: { delta in
-      data.rotation += Float(delta) * .pi/4
+      rotation += Float(delta) * .pi/4
     }) {
       CameraNode(id: "mainCam")
         .translated(.back * 3)
       FunLights(id: "funLights")
       CubeNode(id: "cube")
         .shaded(.uvColored)
-        .transform(.rotated(angle: data.rotation, axis: .up))
-        .transform(.rotated(angle: data.rotation/2, axis: .right))
+        .transform(.rotated(angle: rotation, axis: .up))
+        .transform(.rotated(angle: rotation/2, axis: .right))
     }
     .frame(height: 150)
     .aspectRatio(1, contentMode: .fit)
   }
 
-  @ViewBuilder
-  var midAmble: some View {
+  @ViewBuilder private var midAmble: some View {
     Text("What's cool is I'm rendered inside of **SwiftUI** in **FULL 🔶 3D** backed by **Metal!** 🤘🔥🎸")
       .font(.title2).padding(4)
     Text("Right from SwiftUI like this:")
@@ -107,7 +103,7 @@ Swift3DView {
   }
 
   @ViewBuilder
-  var exitAmble: some View {
+  private var exitAmble: some View {
     Text("""
 Swift3DView(updateLoop: { delta in
   data.rotation += Float(delta) * .pi
@@ -149,10 +145,10 @@ Swift3DView(updateLoop: { delta in
     Text("🐮 **MOOOO!** ❤️")
       .font(.title)
   }
+}
 
-  struct preview: PreviewProvider {
-    static var previews: some View {
-      CowSample()
-    }
+private struct Preview: PreviewProvider {
+  static var previews: some View {
+    CowSample()
   }
 }
