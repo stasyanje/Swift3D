@@ -32,8 +32,9 @@ public struct Swift3DView: UIViewRepresentable {
       )
     } catch {
       assertionFailure(String(describing: error))
+      
       let errorLabel = UILabel()
-      errorLabel.text = error.localizedDescription
+      errorLabel.text = String(describing: error)
       errorLabel.sizeToFit()
       return errorLabel
     }

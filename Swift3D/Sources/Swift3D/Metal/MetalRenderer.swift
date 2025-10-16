@@ -6,56 +6,49 @@ import simd
 // MARK: - Renderer
 
 public class MetalRenderer {
-  public enum Error: Swift.Error {
+  enum Error: Swift.Error {
     case commandQueueInit
-    case sfuBufferInit
     case commandBufferInit
+    case depthStencilInit
     case encoderInit(any MetalDrawable)
   }
   
+  private let bufferFactory: MetalBufferFactory
   private let commandQueue: MTLCommandQueue
-  let metalDevice: MTLDevice
-  let depthStencilState: MTLDepthStencilState?
-  let standardFragmentUniformBuffer: MTLBuffer
+  private let depthStencilState: MTLDepthStencilState
+  private var depthTexture: MTLTexture?
   
-  private lazy var defaultProjViewBuffer: MTLBuffer? = {
-    metalDevice.makeBuffer(length: MemoryLayout<ViewProjectionUniform>.size).flatMap { buff in
-      buff.contents().storeBytes(
-        of: ViewProjectionUniform(projectionMatrix: float4x4.identity, viewMatrix: float4x4.identity),
-        as: ViewProjectionUniform.self
-      )
-      return buff
-    }
-  }()
+  private lazy var defaultProjViewBuffer = bufferFactory.buffer(storing: ViewProjectionUniform(
+    projectionMatrix: float4x4.identity,
+    viewMatrix: float4x4.identity
+  ))
   
-  public init(device: MTLDevice) throws(Error) {
-    guard let cq = device.makeCommandQueue() else {
-      throw .commandQueueInit
-    }
-    
-    guard let buff = device.makeBuffer(length: MemoryLayout<StandardFragmentUniform>.size) else {
-      throw .sfuBufferInit
-    }
-    
-    commandQueue = cq
-    metalDevice = device
-    standardFragmentUniformBuffer = buff
-
+  init(device: MTLDevice, bufferFactory: MetalBufferFactory) throws(Error) {
     let descriptor = MTLDepthStencilDescriptor()
     descriptor.depthCompareFunction = .less
     descriptor.isDepthWriteEnabled = true
-    depthStencilState = device.makeDepthStencilState(descriptor: descriptor)
+    
+    guard let depthStencilState = device.makeDepthStencilState(descriptor: descriptor) else {
+      throw .depthStencilInit
+    }
+    
+    guard let commandQueue = device.makeCommandQueue() else {
+      throw .commandQueueInit
+    }
+    
+    self.bufferFactory = bufferFactory
+    self.commandQueue = commandQueue
+    self.depthStencilState = depthStencilState
   }
   
-  func render(
-    _ time: CFTimeInterval,
-    layerDrawable: CAMetalDrawable,
-    depthTexture: MTLTexture,
-    commands: [CommandAndPrevious]
-  ) throws(Error) {
+  // MARK: - Public
+  
+  func render(time: Double, layerDrawable: CAMetalDrawable, commands: [CommandAndPrevious]) throws(Error) {
     guard let buffer = commandQueue.makeCommandBuffer() else {
       throw .commandBufferInit
     }
+    
+    let depthTexture = prepareDepthTexture(size: layerDrawable.layer.drawableSize)
 
     // Clear the textures
     clearPass(buffer: buffer, layerDrawable: layerDrawable, depthTexture: depthTexture)
@@ -99,7 +92,7 @@ public class MetalRenderer {
     buffer.commit()
   }
 
-  //MARK: - Pass Helpers
+  // MARK: - Private
 
   private func renderPassDescriptor(buffer: MTLCommandBuffer, layerDrawable: CAMetalDrawable, depthTexture: MTLTexture) -> MTLRenderPassDescriptor {
     // Render Command Pass
@@ -134,8 +127,6 @@ public class MetalRenderer {
     renderEncoder.endEncoding()
   }
 
-  //MARK: - Data Helpers
-
   private func standardFragmentUniform(from commands: [CommandAndPrevious], lightCount: Int) -> StandardFragmentUniform {
     if let cameraCommand = commands.first(where: { $0.0 is PlaceCamera })?.0 as? PlaceCamera {
       return StandardFragmentUniform(camPos: simd_float4(cameraCommand.transform.value.translation, 1),
@@ -151,5 +142,15 @@ public class MetalRenderer {
     }
 
     return defaultProjViewBuffer
+  }
+  
+  private func prepareDepthTexture(size: CGSize) -> MTLTexture {
+    if let depthTexture, depthTexture.width == Int(size.width), depthTexture.height == Int(size.height) {
+      return depthTexture
+    }
+    
+    let depthTexture = bufferFactory.depthTexture(drawableSize: size)
+    self.depthTexture = depthTexture
+    return depthTexture
   }
 }

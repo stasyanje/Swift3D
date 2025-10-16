@@ -15,6 +15,7 @@ public class MetalView: UIView {
   private let device: MTLDevice
   
   private let renderer: MetalRenderer
+  private let bufferFactory: MetalBufferFactory
   private let scene: MetalScene3D
   
   private let timelineLoop = TimelineLoop(fps: 60)
@@ -42,8 +43,10 @@ public class MetalView: UIView {
     guard let device = MTLCreateSystemDefaultDevice() else {
       throw Error.deviceInit
     }
-    scene = try MetalScene3D(device: device)
-    renderer = try MetalRenderer(device: device)
+    bufferFactory = MetalBufferFactory(device: device)
+    renderer = try MetalRenderer(device: device, bufferFactory: bufferFactory)
+    let shaderLibrary = try MetalShaderLibrary(device: device, bufferFactory: bufferFactory)
+    scene = MetalScene3D(device: device, shaderLibrary: shaderLibrary)
     
     self.device = device
     self.content = contentFactory
@@ -70,23 +73,10 @@ public class MetalView: UIView {
     timelineLoop.stop()
   }
   
-  // MARK: - View Methods
-  
-  private var lastSize = CGSize.zero
-  
-  public override func layoutSubviews() {
-    super.layoutSubviews()
-    
-    if bounds.size != lastSize {
-      lastSize = bounds.size
-      metalDepthTexture = makeDepthTexture()
-    }
-  }
-  
   // MARK: - Private
   
   private func render(time: CFTimeInterval) throws {
-    guard let depth = metalDepthTexture, let drawable = metalLayer.nextDrawable() else {
+    guard let drawable = metalLayer.nextDrawable() else {
       return
     }
 
@@ -102,37 +92,7 @@ public class MetalView: UIView {
       command.storage.update(time: time, command: command, previous: previousStorage)
     }
     
-    try renderer.render(
-      time,
-      layerDrawable: drawable,
-      depthTexture: depth,
-      commands: scene.commands
-    )
-  }
-  
-  private func makeDepthTexture() -> MTLTexture? {
-    let metalLayer = metalLayer
-    
-    var drawableSize = metalLayer.drawableSize
-    
-    if drawableSize == .zero {
-      drawableSize = metalLayer.preferredFrameSize()
-      drawableSize.width *= metalLayer.contentsScale
-      drawableSize.height *= metalLayer.contentsScale
-    }
-    
-    assert(drawableSize != .zero, "Unaccounted situtation")
-    
-    let desc = MTLTextureDescriptor.texture2DDescriptor(
-        pixelFormat: .depth32Float_stencil8,
-        width: Int(drawableSize.width),
-        height: Int(drawableSize.height),
-        mipmapped: false
-    )
-    desc.storageMode = .private
-    desc.usage = .renderTarget
-    
-    return device.makeTexture(descriptor: desc)
+    try renderer.render(time: time, layerDrawable: drawable, commands: scene.commands)
   }
 }
 

@@ -19,9 +19,9 @@ class MetalScene3D {
   private(set) var content: any Node = EmptyNode()
   private(set) var commands: [CommandAndPrevious] = []
   
-  init(device: MTLDevice) throws {
+  init(device: MTLDevice, shaderLibrary: MetalShaderLibrary) {
     self.device = device
-    self.shaderLibrary = try MetalShaderLibrary(device: device)
+    self.shaderLibrary = shaderLibrary
     self.geometryLibrary = MetalGeometryLibrary(device: device)
   }
   
