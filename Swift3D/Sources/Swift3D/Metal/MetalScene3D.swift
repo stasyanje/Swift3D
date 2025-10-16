@@ -13,17 +13,19 @@ typealias CommandAndPrevious = (any MetalDrawable, (any MetalDrawable_Storage)?)
 
 class MetalScene3D {
   private let device: MTLDevice
+  private let shaderLibrary: MetalShaderLibrary
+  private let geometryLibrary: MetalGeometryLibrary
+  
   private(set) var content: any Node = EmptyNode()
   private(set) var commands: [CommandAndPrevious] = []
   
-  init(device: MTLDevice) {
+  init(device: MTLDevice) throws {
     self.device = device
+    self.shaderLibrary = try MetalShaderLibrary(device: device)
+    self.geometryLibrary = MetalGeometryLibrary(device: device)
   }
   
-  func setContent(_ content: any Node,
-                  shaderLibrary: MetalShaderLibrary,
-                  geometryLibrary: MetalGeometryLibrary,
-                  surfaceAspect: Float) {
+  func setContent(_ content: any Node, surfaceAspect: Float) {
     self.content = content
     
     // Generate some draw commands
@@ -32,13 +34,14 @@ class MetalScene3D {
       assert(prevCommands.count <= 1, "Ids must be unique. Please check your Ids.")
       let prevStorage = prevCommands.first?.0.storage
 
-      command.storage
-        .build(command,
-               previous: prevStorage,
-               device: device,
-               shaderLibrary: shaderLibrary,
-               geometryLibrary: geometryLibrary,
-               surfaceAspect: surfaceAspect)
+      command.storage.build(
+        command,
+        previous: prevStorage,
+        device: device,
+        shaderLibrary: shaderLibrary,
+        geometryLibrary: geometryLibrary,
+        surfaceAspect: surfaceAspect
+      )
       
       return (command, prevStorage)
     }

@@ -23,7 +23,7 @@ struct CowSample: View {
       cubeScene
       exitAmble
     }
-    .background(.white, ignoresSafeAreaEdges: .all)
+    .background(.black, ignoresSafeAreaEdges: .all)
     .onAppear {
       motion.start()
     }

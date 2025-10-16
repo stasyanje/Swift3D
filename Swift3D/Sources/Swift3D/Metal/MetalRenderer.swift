@@ -5,57 +5,56 @@ import simd
 
 // MARK: - Renderer
 
-public class MetalRenderer: ObservableObject {
+public class MetalRenderer {
+  public enum Error: Swift.Error {
+    case commandQueueInit
+    case sfuBufferInit
+    case commandBufferInit
+    case encoderInit(any MetalDrawable)
+  }
+  
   private let commandQueue: MTLCommandQueue
   let metalDevice: MTLDevice
   let depthStencilState: MTLDepthStencilState?
   let standardFragmentUniformBuffer: MTLBuffer
-
-  // Low Ambient Lighting
-  private var defaultLighting: [Light] {
-    [Light(position: simd_float4(.zero, 1), color: .one * 0.35)]
-  }
   
   private lazy var defaultProjViewBuffer: MTLBuffer? = {
-    let buff = metalDevice.makeBuffer(length: MemoryLayout<ViewProjectionUniform>.size)
-    guard let buff = buff else {
-      fatalError()
+    metalDevice.makeBuffer(length: MemoryLayout<ViewProjectionUniform>.size).flatMap { buff in
+      buff.contents().storeBytes(
+        of: ViewProjectionUniform(projectionMatrix: float4x4.identity, viewMatrix: float4x4.identity),
+        as: ViewProjectionUniform.self
+      )
+      return buff
     }
-    
-    let vpUniform = ViewProjectionUniform(projectionMatrix: float4x4.identity, 
-                                          viewMatrix: float4x4.identity)
-    
-    buff.contents().storeBytes(of: vpUniform, as: ViewProjectionUniform.self)
-    return buff
   }()
   
-  public init(device: MTLDevice) {
+  public init(device: MTLDevice) throws(Error) {
     guard let cq = device.makeCommandQueue() else {
-      fatalError()        
-    }   
+      throw .commandQueueInit
+    }
+    
+    guard let buff = device.makeBuffer(length: MemoryLayout<StandardFragmentUniform>.size) else {
+      throw .sfuBufferInit
+    }
     
     commandQueue = cq
     metalDevice = device
-    
+    standardFragmentUniformBuffer = buff
+
     let descriptor = MTLDepthStencilDescriptor()
     descriptor.depthCompareFunction = .less
     descriptor.isDepthWriteEnabled = true
-    
-    self.depthStencilState = device.makeDepthStencilState(descriptor: descriptor)
-
-    guard let buff = device.makeBuffer(length: MemoryLayout<StandardFragmentUniform>.size) else {
-      fatalError()
-    }
-
-    self.standardFragmentUniformBuffer = buff
+    depthStencilState = device.makeDepthStencilState(descriptor: descriptor)
   }
   
-  func render(_ time: CFTimeInterval, 
-              layerDrawable: CAMetalDrawable, 
-              depthTexture: MTLTexture,
-              commands: [CommandAndPrevious]) {
+  func render(
+    _ time: CFTimeInterval,
+    layerDrawable: CAMetalDrawable,
+    depthTexture: MTLTexture,
+    commands: [CommandAndPrevious]
+  ) throws(Error) {
     guard let buffer = commandQueue.makeCommandBuffer() else {
-      fatalError()
+      throw .commandBufferInit
     }
 
     // Clear the textures
@@ -65,21 +64,15 @@ public class MetalRenderer: ObservableObject {
     let renderPassDescriptor = renderPassDescriptor(buffer: buffer, layerDrawable: layerDrawable, depthTexture: depthTexture)
 
     // Light Setup
-    var lightsData: [Light] = defaultLighting
-    let lightCommands = commands.compactMap { $0.0 as? PlaceLight }
-    lightsData = lightCommands.map { $0.uniformValues }
+    let lightsData = commands.compactMap { ($0.0 as? PlaceLight)?.uniformValues }
 
     // Camera and Fragment uniforms setup
     let viewProjBuffer = viewProjectionBuffer(from: commands)
     var fragmentUniform = standardFragmentUniform(from: commands, lightCount: lightsData.count)
 
-    commands.forEach { command in
-      guard command.0.needsRender else {
-        return 
-      }
-      
+    for (command, _) in commands where command.needsRender {
       guard let encoder = buffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) else {
-        fatalError()
+        throw .encoderInit(command)
       }
 
       // Add the needed data for GPU rendering
@@ -87,11 +80,19 @@ public class MetalRenderer: ObservableObject {
         encoder.setVertexBuffer(viewProjBuffer, offset: 0, index: 2)
       }
 
-      encoder.setFragmentBytes(&fragmentUniform, length: MemoryLayout<StandardFragmentUniform>.size, index: FragmentBufferIndex.uniform.rawValue)
-      encoder.setFragmentBytes(lightsData, length: MemoryLayout<Light>.stride * lightsData.count, index: FragmentBufferIndex.lights.rawValue)
+      encoder.setFragmentBytes(
+        &fragmentUniform,
+        length: MemoryLayout<StandardFragmentUniform>.size,
+        index: FragmentBufferIndex.uniform.rawValue
+      )
+      encoder.setFragmentBytes(
+        lightsData,
+        length: MemoryLayout<Light>.stride * lightsData.count,
+        index: FragmentBufferIndex.lights.rawValue
+      )
 
       // Render!
-      command.0.render(encoder: encoder, depthStencil: depthStencilState)
+      command.render(encoder: encoder, depthStencil: depthStencilState)
     }
 
     buffer.present(layerDrawable)
@@ -119,12 +120,15 @@ public class MetalRenderer: ObservableObject {
     clearPassDescriptor.depthAttachment.texture = depthTexture
     clearPassDescriptor.depthAttachment.loadAction = .clear
     clearPassDescriptor.depthAttachment.storeAction = .store
+    
+    let clearColor = 0.0
 
     clearPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(
-      red: 1,
-      green: 1,
-      blue: 1,
-      alpha: 1.0)
+      red: clearColor,
+      green: clearColor,
+      blue: clearColor,
+      alpha: 1.0
+    )
 
     let renderEncoder = buffer.makeRenderCommandEncoder(descriptor: clearPassDescriptor)!
     renderEncoder.endEncoding()

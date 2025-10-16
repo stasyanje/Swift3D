@@ -5,15 +5,16 @@ import Metal
 import MetalKit
 
 public class MetalView: UIView {
+  private enum Error: Swift.Error {
+    case deviceInit
+  }
+  
   public override class var layerClass: AnyClass { CAMetalLayer.self }
   private var metalLayer: CAMetalLayer { layer as! CAMetalLayer }
   
   private let device: MTLDevice
   
   private let renderer: MetalRenderer
-  private let shaderLibrary: MetalShaderLibrary
-  private let geometryLibrary: MetalGeometryLibrary
-
   private let scene: MetalScene3D
   
   private let timelineLoop = TimelineLoop(fps: 60)
@@ -39,20 +40,16 @@ public class MetalView: UIView {
     contentFactory: @escaping () -> any Node
   ) throws {
     guard let device = MTLCreateSystemDefaultDevice() else {
-      throw NSError(domain: "MTLCreateSystemDefaultDevice", code: -1)
+      throw Error.deviceInit
     }
-    self.device = device
-    shaderLibrary = try MetalShaderLibrary(device: device)
-    geometryLibrary = MetalGeometryLibrary(device: device)
-    scene = MetalScene3D(device: device)
-    renderer = MetalRenderer(device: device)
+    scene = try MetalScene3D(device: device)
+    renderer = try MetalRenderer(device: device)
     
+    self.device = device
     self.content = contentFactory
     self.updateLoop = updateLoop
     self.preferredTimeBetweenUpdates = 1.0 / Double(preferredFps)
-    
-    // Needs initial frame to not be zero to create MTLDevice
-    super.init(frame: CGRect(x: 0, y: 0, width: 1, height: 1))
+    super.init(frame: .zero)
     
     let metalLayer = metalLayer
     metalLayer.device = device
@@ -61,7 +58,11 @@ public class MetalView: UIView {
     metalLayer.contentsScale = UIScreen.main.scale
 
     timelineLoop.start { [weak self] frameTime in
-      self?.render(time: frameTime)
+      do {
+        try self?.render(time: frameTime)
+      } catch {
+        fatalError(String(describing: error))
+      }
     }
   }
   
@@ -84,30 +85,29 @@ public class MetalView: UIView {
   
   // MARK: - Private
   
-  private func render(time: CFTimeInterval) {
+  private func render(time: CFTimeInterval) throws {
     guard let depth = metalDepthTexture, let drawable = metalLayer.nextDrawable() else {
       return
     }
 
     let delta = time - lastUpdateTime
     if delta >= preferredTimeBetweenUpdates {
-      updateLoop(delta)
       lastUpdateTime = time
-
-      scene.setContent(
-        content(),
-        shaderLibrary: shaderLibrary,
-        geometryLibrary: geometryLibrary,
-        surfaceAspect: Float(layer.frame.size.width / layer.frame.size.height)
-      )
+      updateLoop(delta)
+      scene.setContent(content(), surfaceAspect: Float(bounds.width / bounds.height))
     }
 
     // Update command values for GPU & Time (primarily used for transitions)
     scene.commands.forEach { (command, previousStorage) in
       command.storage.update(time: time, command: command, previous: previousStorage)
     }
-
-    renderer.render(time, layerDrawable: drawable, depthTexture: depth, commands: scene.commands)
+    
+    try renderer.render(
+      time,
+      layerDrawable: drawable,
+      depthTexture: depth,
+      commands: scene.commands
+    )
   }
   
   private func makeDepthTexture() -> MTLTexture? {
