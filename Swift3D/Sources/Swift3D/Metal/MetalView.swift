@@ -5,9 +5,10 @@ import Metal
 import MetalKit
 
 public class MetalView: UIView {
+  public override class var layerClass: AnyClass { CAMetalLayer.self }
+  private var metalLayer: CAMetalLayer { layer as! CAMetalLayer }
+  
   private let device: MTLDevice
-  private var metalLayer: CAMetalLayer?
-  private var metalDepthTexture: MTLTexture?
   
   private let renderer: MetalRenderer
   private let shaderLibrary: MetalShaderLibrary
@@ -16,136 +17,122 @@ public class MetalView: UIView {
   private let scene: MetalScene3D
   
   private let timelineLoop = TimelineLoop(fps: 60)
-  private var updateLoop: ((_ deltaTime: CFTimeInterval) -> Void)?
-  private var lastUpdateTime: CFTimeInterval = 0
-  private var preferredTimeBetweenUpdates: CFTimeInterval = 0
-
-  private var screenScale: CGFloat {
-    self.window?.screen.scale ?? 1
-  }
-
-  private var content: (() -> any Node)?
+  private let updateLoop: (_ deltaTime: Double) -> Void
+  private let content: () -> any Node
+  
+  private var lastUpdateTime = CACurrentMediaTime()
+  private var preferredTimeBetweenUpdates = 0.0
+  
+  private var metalDepthTexture: MTLTexture?
   
   // MARK: Setup / Teardown
   
+  @available(*, unavailable)
   public required init?(coder: NSCoder) {
-    fatalError("init(coder:) has not been implemented")
+    assertionFailure("init(coder:) has not been implemented")
+    return nil
   }
   
-  public override init(frame: CGRect) {
-    if let d = MTLCreateSystemDefaultDevice() {
-      device = d      
+  public init(
+    preferredFps: Int,
+    updateLoop: @escaping (_ deltaTime: Double) -> Void,
+    contentFactory: @escaping () -> any Node
+  ) throws {
+    guard let device = MTLCreateSystemDefaultDevice() else {
+      throw NSError(domain: "MTLCreateSystemDefaultDevice", code: -1)
     }
-    else {
-      fatalError()
-    }
-    
-    shaderLibrary = MetalShaderLibrary(device: device)
+    self.device = device
+    shaderLibrary = try MetalShaderLibrary(device: device)
     geometryLibrary = MetalGeometryLibrary(device: device)
     scene = MetalScene3D(device: device)
     renderer = MetalRenderer(device: device)
     
-    super.init(frame: frame)
+    self.content = contentFactory
+    self.updateLoop = updateLoop
+    self.preferredTimeBetweenUpdates = 1.0 / Double(preferredFps)
     
-    setupLayer()
+    // Needs initial frame to not be zero to create MTLDevice
+    super.init(frame: CGRect(x: 0, y: 0, width: 1, height: 1))
+    
+    let metalLayer = metalLayer
+    metalLayer.device = device
+    metalLayer.pixelFormat = .bgra8Unorm
+    metalLayer.framebufferOnly = true
+    metalLayer.contentsScale = UIScreen.main.scale
+
     timelineLoop.start { [weak self] frameTime in
       self?.render(time: frameTime)
     }
-  }
-
-  private func setupLayer() {
-    let ml = CAMetalLayer()
-
-    ml.device = device
-    ml.contentsScale = screenScale
-    ml.pixelFormat = .bgra8Unorm
-    ml.framebufferOnly = true
-    ml.frame = layer.frame
-    layer.addSublayer(ml)
-    
-    self.metalLayer = ml
   }
   
   deinit {
     timelineLoop.stop()
   }
   
-  // MARK: - Rendering and Content
+  // MARK: - View Methods
   
-  public func setUpdateLoop(_ updateLoop: ((_ deltaTime: CFTimeInterval) -> Void)?, preferredFps: Int) {
-    self.lastUpdateTime = CACurrentMediaTime()
-    self.updateLoop = updateLoop
-    self.preferredTimeBetweenUpdates = 1.0 / Double(preferredFps)    
+  private var lastSize = CGSize.zero
+  
+  public override func layoutSubviews() {
+    super.layoutSubviews()
+    
+    if bounds.size != lastSize {
+      lastSize = bounds.size
+      metalDepthTexture = makeDepthTexture()
+    }
   }
-
-  public func setContent(_ content: @escaping () -> any Node) {
-    self.content = content
-    scene.setContent(content(),
-                     shaderLibrary: shaderLibrary,
-                     geometryLibrary: geometryLibrary,
-                     surfaceAspect: Float(layer.frame.size.width / layer.frame.size.height))
-  }
+  
+  // MARK: - Private
   
   private func render(time: CFTimeInterval) {
-    guard let drawable = metalLayer?.nextDrawable(),
-          let depth = metalDepthTexture else {
+    guard let depth = metalDepthTexture, let drawable = metalLayer.nextDrawable() else {
       return
     }
 
     let delta = time - lastUpdateTime
     if delta >= preferredTimeBetweenUpdates {
-      updateLoop?(delta)
+      updateLoop(delta)
       lastUpdateTime = time
 
-      if let content = self.content {
-        scene.setContent(content(),
-                         shaderLibrary: shaderLibrary,
-                         geometryLibrary: geometryLibrary,
-                         surfaceAspect: Float(layer.frame.size.width / layer.frame.size.height))
-      }
+      scene.setContent(
+        content(),
+        shaderLibrary: shaderLibrary,
+        geometryLibrary: geometryLibrary,
+        surfaceAspect: Float(layer.frame.size.width / layer.frame.size.height)
+      )
     }
 
     // Update command values for GPU & Time (primarily used for transitions)
     scene.commands.forEach { (command, previousStorage) in
-      command.storage.update(time: time,
-                             command: command,
-                             previous: previousStorage)
+      command.storage.update(time: time, command: command, previous: previousStorage)
     }
 
     renderer.render(time, layerDrawable: drawable, depthTexture: depth, commands: scene.commands)
   }
   
-  // MARK: - View Methods
-  
-  public override func layoutSubviews() {
-    guard let layers = layer.sublayers else {
-      return
-    }
-
-    for l in layers {
-      l.frame = layer.frame
-      if let metalLayer = l as? CAMetalLayer {
-        metalLayer.drawableSize = CGSize(width: layer.bounds.size.width * screenScale,
-                                         height: layer.bounds.height * screenScale)
-      }
+  private func makeDepthTexture() -> MTLTexture? {
+    let metalLayer = metalLayer
+    
+    var drawableSize = metalLayer.drawableSize
+    
+    if drawableSize == .zero {
+      drawableSize = metalLayer.preferredFrameSize()
+      drawableSize.width *= metalLayer.contentsScale
+      drawableSize.height *= metalLayer.contentsScale
     }
     
-    // Reset content to reset the aspect ration on the projection matrix.
-    scene.setContent(scene.content,
-                     shaderLibrary: shaderLibrary,
-                     geometryLibrary: geometryLibrary,
-                     surfaceAspect: Float(layer.frame.size.width / layer.frame.size.height))
+    assert(drawableSize != .zero, "Unaccounted situtation")
     
-    
-    // Remake our depth texture to size.
     let desc = MTLTextureDescriptor.texture2DDescriptor(
         pixelFormat: .depth32Float_stencil8,
-        width: Int(layer.frame.size.width * screenScale),
-        height: Int(layer.frame.size.height * screenScale),
-        mipmapped: false)
+        width: Int(drawableSize.width),
+        height: Int(drawableSize.height),
+        mipmapped: false
+    )
     desc.storageMode = .private
-    desc.usage = .renderTarget    
-    self.metalDepthTexture = device.makeTexture(descriptor: desc)
+    desc.usage = .renderTarget
+    
+    return device.makeTexture(descriptor: desc)
   }
 }
 
@@ -159,6 +146,10 @@ private class TimelineLoop {
 
   init(fps: Float) {
     self.fps = fps
+  }
+  
+  deinit {
+    dp?.invalidate()
   }
 
   func start(callback: @escaping (CFTimeInterval) -> Void) {

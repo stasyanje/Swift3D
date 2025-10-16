@@ -42,13 +42,9 @@ public class MetalShaderLibrary {
   let device: MTLDevice
   let library: MTLLibrary
 
-  public init(device: MTLDevice) {
-    guard let lib = try? device.makeDefaultLibrary(bundle: Bundle.module) else {
-      fatalError()
-    }
-    
+  public init(device: MTLDevice) throws {
     self.device = device
-    self.library = lib
+    self.library = try device.makeDefaultLibrary(bundle: Bundle.module)
   }
   
   func pipeline(for vertex: String, fragment: String, vertexDescriptor: MTLVertexDescriptor? = nil) -> MTLRenderPipelineState {
