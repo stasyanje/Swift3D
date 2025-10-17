@@ -11,29 +11,22 @@ import MetalKit
 import ModelIO
 
 public class MetalGeometryLibrary {
+  private let device: MTLDevice
+  private(set) lazy var allocator = MTKMeshBufferAllocator(device: device)
   // TODO: Limit the size of this fella.
   private var mdlModels: [String: MTKMesh] = [:]
 
-  let device: MTLDevice
-  lazy var allocator: MTKMeshBufferAllocator = {
-    MTKMeshBufferAllocator(device: device)
-  }()
-
-  public init(device: MTLDevice) {
+  init(device: MTLDevice) {
     self.device = device
   }
 
-  func cachedMesh(_ geometry: MetalDrawable_Geometry) -> MTKMesh {
+  func cachedMesh(_ geometry: MetalDrawable_Geometry) throws -> MTKMesh {
     if let asset = mdlModels[geometry.cacheKey] {
       return asset
     }
-
-    do {
-      let asset = try geometry.get(device: device, allocator: allocator)
-      mdlModels[geometry.cacheKey] = asset
-      return asset
-    } catch {
-      fatalError()
-    }
+    
+    let asset = try geometry.get(device: device, allocator: allocator)
+    mdlModels[geometry.cacheKey] = asset
+    return asset
   }
 }

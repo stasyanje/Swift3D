@@ -11,9 +11,7 @@ public class MetalView: UIView {
   
   public override class var layerClass: AnyClass { CAMetalLayer.self }
   private var metalLayer: CAMetalLayer { layer as! CAMetalLayer }
-  
-  private let device: MTLDevice
-  
+    
   private let renderer: MetalRenderer
   private let bufferFactory: MetalBufferFactory
   private let scene: MetalScene3D
@@ -24,9 +22,7 @@ public class MetalView: UIView {
   
   private var lastUpdateTime = CACurrentMediaTime()
   private var preferredTimeBetweenUpdates = 0.0
-  
-  private var metalDepthTexture: MTLTexture?
-  
+    
   // MARK: Setup / Teardown
   
   @available(*, unavailable)
@@ -48,7 +44,6 @@ public class MetalView: UIView {
     let shaderLibrary = try MetalShaderLibrary(device: device, bufferFactory: bufferFactory)
     scene = MetalScene3D(device: device, shaderLibrary: shaderLibrary)
     
-    self.device = device
     self.content = contentFactory
     self.updateLoop = updateLoop
     self.preferredTimeBetweenUpdates = 1.0 / Double(preferredFps)

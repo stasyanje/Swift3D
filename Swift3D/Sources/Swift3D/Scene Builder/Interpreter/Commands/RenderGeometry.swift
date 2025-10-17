@@ -113,10 +113,9 @@ extension RenderGeometry.Storage {
 
     if let previous = previous {
       copy(from: previous)
-    }
-    else {
+    } else {
       self.transform = command.transform
-      self.mesh = geometryLibrary.cachedMesh(command.geometry)
+      self.mesh = try! geometryLibrary.cachedMesh(command.geometry)
     }
     
     // set up our shader pipeline

@@ -29,7 +29,7 @@ class MetalScene3D {
     self.content = content
     
     // Generate some draw commands
-    let nextCommands = content.drawCommands.map { command in
+    commands = content.drawCommands.map { [commands] command in
       let prevCommands = commands.filter { $0.0.id == command.id }
       assert(prevCommands.count <= 1, "Ids must be unique. Please check your Ids.")
       let prevStorage = prevCommands.first?.0.storage
@@ -45,7 +45,5 @@ class MetalScene3D {
       
       return (command, prevStorage)
     }
-    
-    commands = nextCommands
   }
 }
