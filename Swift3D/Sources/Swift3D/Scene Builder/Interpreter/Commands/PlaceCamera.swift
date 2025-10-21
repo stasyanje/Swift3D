@@ -61,7 +61,6 @@ extension PlaceCamera {
 // MARK: Storage
 extension PlaceCamera {
   class Storage: MetalDrawable_Storage {
-    private(set) var device: MTLDevice?
     private(set) var surfaceAspect: Float = 1
     private(set) var viewProjBuffer: MTLBuffer?
 
@@ -120,7 +119,6 @@ extension PlaceCamera.Storage {
       fatalError()
     }
 
-    self.device = device
     self.surfaceAspect = surfaceAspect
 
     // Build the Pipeline

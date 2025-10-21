@@ -71,7 +71,6 @@ extension RenderGeometry {
 
 extension RenderGeometry {
   class Storage: MetalDrawable_Storage {
-    private(set) var device: MTLDevice?
     private(set) var mesh: MTKMesh?
 
     private(set) var normalMatrix: float3x3 = float3x3(1)
@@ -103,8 +102,6 @@ extension RenderGeometry.Storage {
     }
     
     let previous = previous as? RenderGeometry.Storage
-    self.device = device
-
 
     if let previous = previous {
       copy(from: previous)

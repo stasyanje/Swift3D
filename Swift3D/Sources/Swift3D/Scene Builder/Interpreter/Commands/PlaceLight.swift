@@ -56,7 +56,6 @@ extension PlaceLight {
 
 extension PlaceLight {
   class Storage: MetalDrawable_Storage {
-    private(set) var device: MTLDevice?
     private(set) var uniformValues: Light?
   }
 }
@@ -82,8 +81,6 @@ extension PlaceLight.Storage {
                shaderLibrary: MetalShaderLibrary,
                geometryLibrary: MetalGeometryLibrary,
                surfaceAspect: Float) {
-    self.device = device
-
     if let previous = previous as? PlaceLight.Storage {
       self.copy(from: previous)
     }

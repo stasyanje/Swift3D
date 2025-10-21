@@ -54,8 +54,6 @@ extension RenderModel {
 
 extension RenderModel {
   class Storage: MetalDrawable_Storage {
-    private(set) var device: MTLDevice?
-
     private(set) var normalMatrix: float3x3 = float3x3(1)
     private(set) var transform: MetalDrawableData.Transform = .identity
 
@@ -86,10 +84,7 @@ extension RenderModel.Storage {
       fatalError()
     }
 
-    let previous = previous as? RenderModel.Storage
-    self.device = device
-
-    if let previous = previous {
+    if let previous = previous as? RenderModel.Storage {
       copy(from: previous)
     }
     else {
