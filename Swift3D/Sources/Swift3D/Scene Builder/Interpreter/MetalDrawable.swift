@@ -29,7 +29,11 @@ extension MetalDrawableData {
 
 // MARK: - Data Storage
 public protocol MetalDrawable_Storage {
-  func update(time: CFTimeInterval, command: (any MetalDrawable), previous: (any MetalDrawable_Storage)?)
+  func update(
+    time: CFTimeInterval,
+    command: any MetalDrawable,
+    previous: (any MetalDrawable_Storage)?
+  )
   func build(_ command: (any MetalDrawable),
                previous: (any MetalDrawable_Storage)?,
                device: MTLDevice, 
@@ -75,17 +79,14 @@ extension Array where Element == NodeTransition {
   }
 }
 
-extension MetalDrawable_Storage {
-  func attribute<T: Lerpable>(at time: CFTimeInterval,
-                         cur: T,
-                         prev: T?,
-                         animation: NodeTransition?) -> T {
+extension Lerpable {
+  func attribute(at time: Double, prev: Self?, animation: NodeTransition?) -> Self {
     guard let animation = animation,
           let prev = prev else {
-      return cur
+      return self
     }
 
     let percent = animation.interpolate(time: time)
-    return T.lerp(prev, cur, percent)
+    return Self.lerp(prev, self, percent)
   }
 }

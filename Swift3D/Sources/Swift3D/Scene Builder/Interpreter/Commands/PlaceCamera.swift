@@ -88,23 +88,29 @@ extension PlaceCamera.Storage {
     self.skyboxInverseView = clipToViewDirectionTransform
   }
 
-  func update(time: CFTimeInterval, command: (any MetalDrawable), previous: (any MetalDrawable_Storage)?) {
+  func update(
+    time: CFTimeInterval,
+    command: any MetalDrawable,
+    previous: (any MetalDrawable_Storage)?
+  ) {
     let previous = previous as? Self
     guard let command = command as? PlaceCamera else {
       fatalError()
     }
 
-    let view = attribute(at: time,
-                         cur: command.transform,
-                         prev: previous?.view,
-                         animation: command.animations?.with([.all]))
+    let view = command.transform.attribute(
+      at: time,
+      prev: previous?.view,
+      animation: command.animations?.with([.all])
+    )
 
     let targetProj = command.projection.matrix(aspect: self.surfaceAspect)
-    let projection = attribute(at: time,
-                               cur: targetProj,
-                               prev: previous?.projection,
-                               animation: command.animations?.with([.all]))
-
+    let projection = targetProj.attribute(
+      at: time,
+      prev: previous?.projection,
+      animation: command.animations?.with([.all])
+    )
+    
     updateBuffers(transform: view, projection: projection)
   }
   

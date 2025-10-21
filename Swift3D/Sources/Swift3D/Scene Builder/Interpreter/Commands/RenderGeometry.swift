@@ -79,14 +79,14 @@ extension RenderGeometry {
 }
 
 extension RenderGeometry.Storage {
-  func update(time: CFTimeInterval,
-              command: (any MetalDrawable),
-              previous: (any MetalDrawable_Storage)?) {
-    let previous = previous as? RenderGeometry.Storage
-    transform = attribute(
+  func update(
+    time: CFTimeInterval,
+    command: any MetalDrawable,
+    previous: (any MetalDrawable_Storage)?
+  ) {
+    transform = command.transform.attribute(
       at: time,
-      cur: command.transform,
-      prev: previous?.transform,
+      prev: (previous as? RenderGeometry.Storage)?.transform,
       animation: command.animations?.with([.all])
     )
   }
