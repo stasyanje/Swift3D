@@ -82,12 +82,8 @@ extension PlaceLight.Storage {
                geometryLibrary: MetalGeometryLibrary,
                surfaceAspect: Float) {
     if let previous = previous as? PlaceLight.Storage {
-      self.copy(from: previous)
+      self.uniformValues = previous.uniformValues
     }
-  }
-
-  func copy(from previous: PlaceLight.Storage) {
-    self.uniformValues = previous.uniformValues
   }
 }
 

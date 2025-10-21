@@ -36,7 +36,6 @@ public protocol MetalDrawable_Storage {
                shaderLibrary: MetalShaderLibrary,
                geometryLibrary: MetalGeometryLibrary,
                surfaceAspect: Float)
-  func copy(from previous: Self)
 }
 
 // MARK: - Metal Drawable

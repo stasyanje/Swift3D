@@ -85,9 +85,10 @@ extension RenderModel.Storage {
     }
 
     if let previous = previous as? RenderModel.Storage {
-      copy(from: previous)
-    }
-    else {
+      transform = previous.transform
+      normalMatrix = previous.normalMatrix
+      meshAndTextures = previous.meshAndTextures
+    } else {
       meshAndTextures = .init(device: device)
       meshAndTextures?.build(model: command.model,
                              geometryLibrary: geometryLibrary,
@@ -101,12 +102,6 @@ extension RenderModel.Storage {
       library: shaderLibrary,
       descriptor: meshAndTextures?.vertexDescriptor
     )
-  }
-
-  func copy(from previous: RenderModel.Storage) {
-    self.transform = previous.transform
-    self.normalMatrix = previous.normalMatrix
-    self.meshAndTextures = previous.meshAndTextures
   }
 }
 

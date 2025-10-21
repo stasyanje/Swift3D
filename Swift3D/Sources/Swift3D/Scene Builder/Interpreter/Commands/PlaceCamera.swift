@@ -127,7 +127,10 @@ extension PlaceCamera.Storage {
     // Re-use previous buffers if they are the right size / data and
     // copy data from previous storage for animations.
     if let previous = previous {
-      self.copy(from: previous)
+      viewProjBuffer = previous.viewProjBuffer
+      view = previous.view
+      projection = previous.projection
+      skyboxInverseView = previous.skyboxInverseView
     } else {
       // Make the buffers / data from scratch!
       viewProjBuffer = device.makeBuffer(length: MemoryLayout<ViewProjectionUniform>.size)
@@ -136,13 +139,5 @@ extension PlaceCamera.Storage {
         projection: command.projection.matrix(aspect: surfaceAspect)
       )
     }
-  }
-
-  // Attempt to reuse any generated data or buffers from the existing storage from previous.
-  func copy(from previous: PlaceCamera.Storage) {
-    self.viewProjBuffer = previous.viewProjBuffer
-    self.view = previous.view
-    self.projection = previous.projection
-    self.skyboxInverseView = previous.skyboxInverseView
   }
 }

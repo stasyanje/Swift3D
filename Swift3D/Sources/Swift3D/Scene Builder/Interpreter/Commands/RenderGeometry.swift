@@ -104,7 +104,8 @@ extension RenderGeometry.Storage {
     let previous = previous as? RenderGeometry.Storage
 
     if let previous = previous {
-      copy(from: previous)
+      self.transform = previous.transform
+      self.mesh = previous.mesh
     } else {
       self.transform = command.transform
       self.mesh = try! geometryLibrary.cachedMesh(command.geometry)
@@ -119,12 +120,6 @@ extension RenderGeometry.Storage {
     command.shaderPipeline.build(device: device,
                                  library: shaderLibrary,
                                  descriptor: vertexDescriptor)
-  }
-
-  func copy(from previous: RenderGeometry.Storage) {
-    self.transform = previous.transform
-
-    self.mesh = previous.mesh
   }
 }
 
