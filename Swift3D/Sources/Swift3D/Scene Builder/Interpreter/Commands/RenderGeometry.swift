@@ -80,21 +80,16 @@ extension RenderGeometry {
 }
 
 extension RenderGeometry.Storage {
-  func set<Value>(_ value: Value) {
-    if let t = value as? MetalDrawableData.Transform {
-      self.transform = t
-    }
-  }
-
   func update(time: CFTimeInterval,
               command: (any MetalDrawable),
               previous: (any MetalDrawable_Storage)?) {
     let previous = previous as? RenderGeometry.Storage
-    let transform = attribute(at: time,
-                              cur: command.transform,
-                              prev: previous?.transform,
-                              animation: command.animations?.with([.all]))
-    set(transform)
+    transform = attribute(
+      at: time,
+      cur: command.transform,
+      prev: previous?.transform,
+      animation: command.animations?.with([.all])
+    )
   }
   
   func build(_ command: (any MetalDrawable),

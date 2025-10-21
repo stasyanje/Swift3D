@@ -62,23 +62,18 @@ extension PlaceLight {
 }
 
 extension PlaceLight.Storage {
-  func set<Value>(_ value: Value) {
-    if let light = value as? Light {
-      self.uniformValues = light
-    }
-  }
-
   func update(time: CFTimeInterval, command: (any MetalDrawable), previous: (any MetalDrawable_Storage)?) {
     let previous = previous as? Self
     guard let command = command as? PlaceLight else {
       fatalError()
     }
 
-    let uniformValues = attribute(at: time,
-                                  cur: command.uniformValues,
-                                  prev: previous?.uniformValues,
-                                  animation: command.animations?.with([.all]))
-    set(uniformValues)
+    uniformValues = attribute(
+      at: time,
+      cur: command.uniformValues,
+      prev: previous?.uniformValues,
+      animation: command.animations?.with([.all])
+    )
   }
 
   func build(_ command: (any MetalDrawable),

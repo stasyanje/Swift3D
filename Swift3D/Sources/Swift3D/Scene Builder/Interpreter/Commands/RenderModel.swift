@@ -64,21 +64,16 @@ extension RenderModel {
 }
 
 extension RenderModel.Storage {
-  func set<Value>(_ value: Value) {
-    if let t = value as? MetalDrawableData.Transform {
-      self.transform = t
-    }
-  }
-
   func update(time: CFTimeInterval,
               command: (any MetalDrawable),
               previous: (any MetalDrawable_Storage)?) {
     let previous = previous as? RenderGeometry.Storage
-    let transform = attribute(at: time,
-                              cur: command.transform,
-                              prev: previous?.transform,
-                              animation: command.animations?.with([.all]))
-    set(transform)
+    transform = attribute(
+      at: time,
+      cur: command.transform,
+      prev: previous?.transform,
+      animation: command.animations?.with([.all])
+    )
   }
 
   func build(_ command: (any MetalDrawable),
@@ -144,14 +139,6 @@ extension RenderModel {
       self.device = device
     }
 
-    func set<Value>(_ value: Value) {
-      if let texValue = value as? (String, MTLTexture) {
-        textures[texValue.0] = texValue.1
-      } else if let meshValue = value as? StorageMesh {
-        mesh.append(meshValue)
-      }
-    }
-
     func build(model: Model, geometryLibrary: MetalGeometryLibrary, shaderLibrary: MetalShaderLibrary) {
       do {
         let asset = try model.asset(device: device, allocator: geometryLibrary.allocator)
@@ -176,25 +163,24 @@ extension RenderModel {
         let materials = mdlMeshes.flatMap {
           ($0.submeshes as? [MDLSubmesh] ?? []).compactMap { $0.material }
         }
+        
+        let allSemantics: [MDLMaterialSemantic] = [
+          .baseColor,
+          .emission,
+          .tangentSpaceNormal,
+          .roughness,
+          .metallic,
+          .ambientOcclusion
+        ]
 
         materials.forEach { material in
-          set((material.key(for: .baseColor),
-               material.texture(for: .baseColor, library: shaderLibrary, loader: textureLoader)))
-
-          set((material.key(for: .emission),
-              material.texture(for: .emission, library: shaderLibrary, loader: textureLoader)))
-
-          set((material.key(for: .tangentSpaceNormal),
-              material.texture(for: .tangentSpaceNormal, library: shaderLibrary, loader: textureLoader)))
-
-          set((material.key(for: .roughness),
-              material.texture(for: .roughness, library: shaderLibrary, loader: textureLoader)))
-
-          set((material.key(for: .metallic),
-              material.texture(for: .metallic, library: shaderLibrary, loader: textureLoader)))
-
-          set((material.key(for: .ambientOcclusion),
-              material.texture(for: .ambientOcclusion, library: shaderLibrary, loader: textureLoader)))
+          allSemantics.forEach { semantic in
+            guard let key = material.key(for: semantic) else {
+              return
+            }
+            let value = material.texture(for: semantic, library: shaderLibrary, loader: textureLoader)!
+            textures[key] = value
+          }
         }
       } catch {
         fatalError("RenderModel Model Failure")

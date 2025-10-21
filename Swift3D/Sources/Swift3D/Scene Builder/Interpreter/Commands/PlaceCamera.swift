@@ -72,24 +72,21 @@ extension PlaceCamera {
 }
 
 extension PlaceCamera.Storage {
-  func set<Value>(_ value: Value) {
-    if let tuple = value as? (MetalDrawableData.Transform, float4x4) {
-      // Update matrices
-      self.view = .init(value: tuple.0.value)
-      let view = self.view.value.inverse
-      let proj = tuple.1
-      self.projection = proj
-
-      // Update uniform
-      let vpUniform = ViewProjectionUniform(projectionMatrix: proj, viewMatrix: view)
-      self.viewProjBuffer?.contents().storeBytes(of: vpUniform, as: ViewProjectionUniform.self)
-
-      // Skybox inverse view matrix.
-      var viewDirectionMatrix = view
-      viewDirectionMatrix.columns.3 = SIMD4<Float>(0, 0, 0, 1)
-      let clipToViewDirectionTransform = (proj * viewDirectionMatrix).inverse
-      self.skyboxInverseView = clipToViewDirectionTransform
-    }
+  private func updateBuffers(transform: MetalDrawableData.Transform, projection: float4x4) {
+    // Update matrices
+    self.view = .init(value: transform.value)
+    let view = view.value.inverse
+    self.projection = projection
+    
+    // Update uniform
+    let vpUniform = ViewProjectionUniform(projectionMatrix: projection, viewMatrix: view)
+    self.viewProjBuffer?.contents().storeBytes(of: vpUniform, as: ViewProjectionUniform.self)
+    
+    // Skybox inverse view matrix.
+    var viewDirectionMatrix = view
+    viewDirectionMatrix.columns.3 = SIMD4<Float>(0, 0, 0, 1)
+    let clipToViewDirectionTransform = (projection * viewDirectionMatrix).inverse
+    self.skyboxInverseView = clipToViewDirectionTransform
   }
 
   func update(time: CFTimeInterval, command: (any MetalDrawable), previous: (any MetalDrawable_Storage)?) {
@@ -109,7 +106,7 @@ extension PlaceCamera.Storage {
                                prev: previous?.projection,
                                animation: command.animations?.with([.all]))
 
-    self.set((view, projection))
+    updateBuffers(transform: view, projection: projection)
   }
   
   func build(_ command: (any MetalDrawable),
@@ -135,8 +132,11 @@ extension PlaceCamera.Storage {
       self.copy(from: previous)
     } else {
       // Make the buffers / data from scratch!
-      self.viewProjBuffer = device.makeBuffer(length: MemoryLayout<ViewProjectionUniform>.size)
-      self.set((command.transform, command.projection.matrix(aspect: self.surfaceAspect)))
+      viewProjBuffer = device.makeBuffer(length: MemoryLayout<ViewProjectionUniform>.size)
+      updateBuffers(
+        transform: command.transform,
+        projection: command.projection.matrix(aspect: surfaceAspect)
+      )
     }
   }
 

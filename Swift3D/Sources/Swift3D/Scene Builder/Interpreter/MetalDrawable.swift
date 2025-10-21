@@ -36,8 +36,6 @@ public protocol MetalDrawable_Storage {
                shaderLibrary: MetalShaderLibrary,
                geometryLibrary: MetalGeometryLibrary,
                surfaceAspect: Float)
-
-  func set<Value>(_ value: Value)
   func copy(from previous: Self)
 }
 
@@ -54,15 +52,6 @@ public protocol MetalDrawable {
   var needsRender: Bool { get }
 
   func render(encoder: MTLRenderCommandEncoder, depthStencil: MTLDepthStencilState?)
-}
-
-extension MetalDrawable {
-  /// Updates the values in the command with any animations that are running.  
-  func update(time: CFTimeInterval, previous: (any MetalDrawable)?) {    
-    if let dirtyTransform = attribute(at: time, cur: self.transform, prev: previous?.transform) {
-      storage.set(dirtyTransform)
-    }
-  }
 }
 
 // MARK: - Animated Attributes
