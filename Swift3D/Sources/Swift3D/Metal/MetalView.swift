@@ -18,7 +18,6 @@ public class MetalView: UIView {
   
   private let timelineLoop = TimelineLoop(fps: 60)
   private let updateLoop: (_ deltaTime: Double) -> Void
-  private let content: () -> any Node
   
   private var lastUpdateTime = CACurrentMediaTime()
   private var preferredTimeBetweenUpdates = 0.0
@@ -26,10 +25,7 @@ public class MetalView: UIView {
   // MARK: Setup / Teardown
   
   @available(*, unavailable)
-  public required init?(coder: NSCoder) {
-    assertionFailure("init(coder:) has not been implemented")
-    return nil
-  }
+  public required init?(coder: NSCoder) { nil }
   
   public init(
     preferredFps: Int,
@@ -41,10 +37,12 @@ public class MetalView: UIView {
     }
     bufferFactory = MetalBufferFactory(device: device)
     renderer = try MetalRenderer(device: device, bufferFactory: bufferFactory)
-    let shaderLibrary = try MetalShaderLibrary(device: device, bufferFactory: bufferFactory)
-    scene = MetalScene3D(device: device, shaderLibrary: shaderLibrary)
+    scene = MetalScene3D(
+      device: device,
+      shaderLibrary: try MetalShaderLibrary(device: device, bufferFactory: bufferFactory),
+      contentFactory: contentFactory
+    )
     
-    self.content = contentFactory
     self.updateLoop = updateLoop
     self.preferredTimeBetweenUpdates = 1.0 / Double(preferredFps)
     super.init(frame: .zero)
@@ -76,17 +74,20 @@ public class MetalView: UIView {
     }
 
     let delta = time - lastUpdateTime
-    if delta >= preferredTimeBetweenUpdates {
+    let newFrame = delta >= preferredTimeBetweenUpdates
+    
+    if newFrame {
       lastUpdateTime = time
       updateLoop(delta)
-      scene.buildCommands(content().drawCommands, surfaceAspect: Float(bounds.width / bounds.height))
     }
-
-    try renderer.render(
+    
+    let commands = scene.buildCommands(
+      surfaceAspect: Float(bounds.width / bounds.height),
       time: time,
-      layerDrawable: drawable,
-      commands: scene.updateCommands(time: time)
+      invalidate: newFrame
     )
+
+    try renderer.render(time: time, layerDrawable: drawable, commands: commands)
   }
 }
 
