@@ -29,11 +29,6 @@ extension MetalDrawableData {
 
 // MARK: - Data Storage
 public protocol MetalDrawable_Storage {
-  func update(
-    time: CFTimeInterval,
-    command: any MetalDrawable,
-    previous: (any MetalDrawable_Storage)?
-  )
   func build(_ command: (any MetalDrawable),
                previous: (any MetalDrawable_Storage)?,
                device: MTLDevice, 
@@ -53,7 +48,8 @@ public protocol MetalDrawable {
   
   var storage: Storage { get }
   var needsRender: Bool { get }
-
+  
+  func update(time: CFTimeInterval)
   func render(encoder: MTLRenderCommandEncoder, depthStencil: MTLDepthStencilState?)
 }
 

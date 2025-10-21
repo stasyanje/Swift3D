@@ -43,7 +43,7 @@ public class MetalRenderer {
   
   // MARK: - Public
   
-  func render(time: Double, layerDrawable: CAMetalDrawable, commands: [CommandAndPrevious]) throws(Error) {
+  func render(time: Double, layerDrawable: CAMetalDrawable, commands: [any MetalDrawable]) throws(Error) {
     guard let buffer = commandQueue.makeCommandBuffer() else {
       throw .commandBufferInit
     }
@@ -57,13 +57,13 @@ public class MetalRenderer {
     let renderPassDescriptor = renderPassDescriptor(buffer: buffer, layerDrawable: layerDrawable, depthTexture: depthTexture)
 
     // Light Setup
-    let lightsData = commands.compactMap { ($0.0 as? PlaceLight)?.uniformValues }
+    let lightsData = commands.compactMap { ($0 as? PlaceLight)?.uniformValues }
 
     // Camera and Fragment uniforms setup
     let viewProjBuffer = viewProjectionBuffer(from: commands)
     var fragmentUniform = standardFragmentUniform(from: commands, lightCount: lightsData.count)
 
-    for (command, _) in commands where command.needsRender {
+    for command in commands where command.needsRender {
       guard let encoder = buffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) else {
         throw .encoderInit(command)
       }
@@ -127,8 +127,8 @@ public class MetalRenderer {
     renderEncoder.endEncoding()
   }
 
-  private func standardFragmentUniform(from commands: [CommandAndPrevious], lightCount: Int) -> StandardFragmentUniform {
-    if let cameraCommand = commands.first(where: { $0.0 is PlaceCamera })?.0 as? PlaceCamera {
+  private func standardFragmentUniform(from commands: [any MetalDrawable], lightCount: Int) -> StandardFragmentUniform {
+    if let cameraCommand = commands.first(where: { $0 is PlaceCamera }) as? PlaceCamera {
       return StandardFragmentUniform(camPos: simd_float4(cameraCommand.transform.value.translation, 1),
                                      lightCount: simd_float4(x: Float(lightCount), y: 0, z: 0, w: 0))
     }
@@ -136,8 +136,8 @@ public class MetalRenderer {
     return StandardFragmentUniform(camPos: .zero, lightCount: simd_float4(x: Float(lightCount), y: 0, z: 0, w: 0))
   }
 
-  private func viewProjectionBuffer(from commands: [CommandAndPrevious]) -> MTLBuffer? {
-    if let cameraCommand = commands.first(where: { $0.0 is PlaceCamera })?.0 as? PlaceCamera {
+  private func viewProjectionBuffer(from commands: [any MetalDrawable]) -> MTLBuffer? {
+    if let cameraCommand = commands.first(where: { $0 is PlaceCamera }) as? PlaceCamera {
       return cameraCommand.storage.viewProjBuffer
     }
 

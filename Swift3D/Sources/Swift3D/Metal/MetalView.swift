@@ -79,15 +79,14 @@ public class MetalView: UIView {
     if delta >= preferredTimeBetweenUpdates {
       lastUpdateTime = time
       updateLoop(delta)
-      scene.setContent(content(), surfaceAspect: Float(bounds.width / bounds.height))
+      scene.buildCommands(content().drawCommands, surfaceAspect: Float(bounds.width / bounds.height))
     }
 
-    // Update command values for GPU & Time (primarily used for transitions)
-    scene.commands.forEach { (command, previousStorage) in
-      command.storage.update(time: time, command: command, previous: previousStorage)
-    }
-    
-    try renderer.render(time: time, layerDrawable: drawable, commands: scene.commands)
+    try renderer.render(
+      time: time,
+      layerDrawable: drawable,
+      commands: scene.updateCommands(time: time)
+    )
   }
 }
 

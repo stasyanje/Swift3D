@@ -52,6 +52,10 @@ extension PlaceCamera {
     encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
     encoder.endEncoding()
   }
+  
+  func update(time: CFTimeInterval) {
+    storage.update(time: time, command: self, previous: nil)
+  }
 
   var latestViewPoint: float4x4 {
     self.storage.view.value

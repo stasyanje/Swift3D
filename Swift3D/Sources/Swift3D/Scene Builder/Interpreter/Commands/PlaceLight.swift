@@ -32,6 +32,10 @@ extension PlaceLight {
     fatalError()
   }
   
+  func update(time: CFTimeInterval) {
+    storage.update(time: time, command: self, previous: nil)
+  }
+  
   var uniformValues: Light {
 
     switch type {

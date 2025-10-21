@@ -65,6 +65,10 @@ extension RenderGeometry {
     
     encoder.endEncoding()
   }
+  
+  func update(time: CFTimeInterval) {
+    storage.update(time: time, command: self, previous: nil)
+  }
 }
 
 // MARK: - Storage

@@ -48,6 +48,10 @@ extension RenderModel {
 
     encoder.endEncoding()
   }
+  
+  func update(time: CFTimeInterval) {
+    storage.update(time: time, command: self, previous: nil)
+  }
 }
 
 // MARK: - Storage
@@ -62,7 +66,7 @@ extension RenderModel {
 }
 
 extension RenderModel.Storage {
-  func update(
+  fileprivate func update(
     time: CFTimeInterval,
     command: any MetalDrawable,
     previous: (any MetalDrawable_Storage)?

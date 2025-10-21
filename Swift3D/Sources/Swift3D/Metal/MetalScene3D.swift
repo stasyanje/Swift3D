@@ -9,41 +9,40 @@ import Foundation
 import UIKit
 import Metal
 
-typealias CommandAndPrevious = (any MetalDrawable, (any MetalDrawable_Storage)?)
-
-class MetalScene3D {
+final class MetalScene3D {
   private let device: MTLDevice
   private let shaderLibrary: MetalShaderLibrary
   private let geometryLibrary: MetalGeometryLibrary
   
-  private(set) var content: any Node = EmptyNode()
-  private(set) var commands: [CommandAndPrevious] = []
-  
+  private var commands: [any MetalDrawable] = []
+    
   init(device: MTLDevice, shaderLibrary: MetalShaderLibrary) {
     self.device = device
     self.shaderLibrary = shaderLibrary
     self.geometryLibrary = MetalGeometryLibrary(device: device)
   }
   
-  func setContent(_ content: any Node, surfaceAspect: Float) {
-    self.content = content
-    
-    // Generate some draw commands
-    commands = content.drawCommands.map { [commands] command in
-      let prevCommands = commands.filter { $0.0.id == command.id }
-      assert(prevCommands.count <= 1, "Ids must be unique. Please check your Ids.")
-      let prevStorage = prevCommands.first?.0.storage
-
+  func buildCommands(_ drawCommands: [any MetalDrawable], surfaceAspect: Float) {
+    commands = drawCommands.map { [commands] command in
       command.storage.build(
         command,
-        previous: prevStorage,
+        previous: commands.first { $0.id == command.id }?.storage,
         device: device,
         shaderLibrary: shaderLibrary,
         geometryLibrary: geometryLibrary,
         surfaceAspect: surfaceAspect
       )
       
-      return (command, prevStorage)
+      return command
     }
+  }
+  
+  func updateCommands(time: Double) -> [any MetalDrawable] {
+    // Update command values for GPU & Time (primarily used for transitions)
+    commands.forEach { command in
+      command.update(time: time)
+    }
+    
+    return commands
   }
 }
