@@ -60,7 +60,7 @@ struct CowSample: View {
       CameraNode(id: "mainCam")
         .translated(.back * 3)
       FunLights(id: "funLights")
-      CubeNode(id: "cube")
+      GeometryNode(id: "cube", shape: .cube)
         .shaded(.uvColored)
         .transform(.rotated(angle: rotation, axis: .up))
         .transform(.rotated(angle: rotation/2, axis: .right))

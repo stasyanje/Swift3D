@@ -32,7 +32,7 @@ struct IntroSample: View {
                 .shaded(.standard(albedo: Color.blue))
                 .translated(.down * 0.25)
               
-              CubeNode(id: "cube")
+              GeometryNode(id: "cube", shape: .cube)
                 .shaded(.uvColored)
                 .transform(.rotated(angle: data.rotation, axis: .up))
                 .transform(.rotated(angle: data.rotation/2, axis: .right))

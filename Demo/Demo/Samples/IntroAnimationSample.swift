@@ -46,7 +46,7 @@ struct IntroAnimationSample: View {
             .rotated(angle: slowSpring.value.x, axis: .up)
             .translated(.up * fastSpring.value.y)
 
-          OctaNode(id: "octa", divisions: 0)
+          GeometryNode(id: "cube", shape: .octa(divisions: 0))
             .shaded(.uvColored)
             .scaled(.one * 1.5)
             .rotated(angle: rotation, axis: .up)

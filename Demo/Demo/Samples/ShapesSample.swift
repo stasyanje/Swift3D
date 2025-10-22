@@ -40,33 +40,33 @@ struct ShapesSample: View {
                         skybox: .skybox())
             funLights
 
-            SphereNode(id: "sphere")
+            GeometryNode(id: "sphere", shape: .sphere)
               .shaded(.uvColored)
               .rotated(angle: data.rotation, axis: normalize(.up + .right))
               .translated(3 * .up + 2 * .left)
 
-            CylinderNode(id: "cylinder")
+            GeometryNode(id: "cylinder", shape: .cylinder)
               .shaded(.uvColored)
               .rotated(angle: data.rotation, axis: normalize(.up + .right))
               .translated(2 * .left)
 
-            ConeNode(id: "cone")
+            GeometryNode(id: "cone", shape: .cone)
               .shaded(.uvColored)
               .rotated(angle: data.rotation, axis: normalize(.up + .right))
               .translated(3 * .down + 2 * .left)
 
-            CapsuleNode(id: "capsule")
+            GeometryNode(id: "capsule", shape: .capsule)
               .shaded(.uvColored)
               .rotated(angle: data.rotation, axis: normalize(.up + .right))
               .translated(3 * .up + 2 * .right)
 
-            CubeNode(id: "cube")
+            GeometryNode(id: "cube", shape: .cube)
               .shaded(.uvColored)
               .scaled(.one * 1.5)
               .rotated(angle: data.rotation, axis: normalize(.up + .right))
               .translated(2 * (.right))
 
-            OctaNode(id: "octahed", divisions: 0)
+            GeometryNode(id: "octahed", shape: .octa(divisions: 0))
               .shaded(.uvColored)
               .scaled(.one * 2.5)
               .rotated(angle: data.rotation, axis: normalize(.up + .right))

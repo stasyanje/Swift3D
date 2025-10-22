@@ -51,7 +51,7 @@ struct PBRSample: View {
         PointLightNode(id: "light")
           .colored(color: .white, intensity: 8)
 
-        SphereNode(id: "sphere")
+        GeometryNode(id: "sphere", shape: .sphere)
           .shaded(.unlit(.white))
           .scaled(.one * 0.1)
       }
@@ -62,7 +62,7 @@ struct PBRSample: View {
         PointLightNode(id: "light")
           .colored(color: .green, intensity: 8)
 
-        SphereNode(id: "sphere")
+        GeometryNode(id: "sphere", shape: .sphere)
           .shaded(.unlit(.green))
           .scaled(.one * 0.1)
       }
@@ -73,7 +73,7 @@ struct PBRSample: View {
         PointLightNode(id: "light")
           .colored(color: .purple, intensity: 8)
 
-        SphereNode(id: "sphere")
+        GeometryNode(id: "sphere", shape: .sphere)
           .shaded(.unlit(.purple))
           .scaled(.one * 0.1)
       }

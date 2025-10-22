@@ -54,7 +54,7 @@ struct IsometricSample: View {
             StandardLighting(id: "lights")
 
             ForEach3D(pointCloud.points) { point in
-              CubeNode(id: point.id)
+              GeometryNode(id: point.id, shape: .cube)
                 .shaded(.standard(albedo: Color.red))
                 .scaled(.one * 0.075)
                 .translated(point.position)
@@ -95,17 +95,17 @@ struct IsometricSample: View {
 
   private func axis(id: String) -> some Node {
     GroupNode(id: id) {
-      CubeNode(id: "X")
+      GeometryNode(id: "X", shape: .cube)
 
         .transform(.translated(.right))
         .transform(.scaled(simd_float3(x: 2, y: 0.15, z: 0.15)))
 
-      CubeNode(id: "Y")
+      GeometryNode(id: "Y", shape: .cube)
 
         .transform(.translated(.up))
         .transform(.scaled(simd_float3(x: 0.15, y: 2, z: 0.15)))
 
-      CubeNode(id: "Z")
+      GeometryNode(id: "Z", shape: .cube)
         .transform(.translated(.forward))
         .transform(.scaled(simd_float3(x: 0.15, y: 0.15, z: 2)))
     }
