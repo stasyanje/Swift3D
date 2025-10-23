@@ -13,21 +13,20 @@ public struct ModelNode: Node, AcceptsShaderWithDefaultTextures {
   public let id: String
   public let url: URL
   
+  public var drawCommands: [any MetalDrawable] { [command] }
+  
+  private let command: RenderModel
+  
   public init(id: String, url: URL) {
     self.id = id
     self.url = url
-  }
-
-  public var drawCommands: [any MetalDrawable] {
-    [
-      RenderModel(
-        id: id,
-        transform: .identity,
-        model: Model(url: url),
-        shaderPipeline: .standard(albedo: Color.white),
-        overrideTextures: false,
-        animations: nil
-      )
-    ]
+    self.command = RenderModel(
+      id: id,
+      transform: .identity,
+      model: Model(url: url),
+      shaderPipeline: .standard(albedo: Color.white),
+      overrideTextures: false,
+      animations: nil
+    )
   }
 }

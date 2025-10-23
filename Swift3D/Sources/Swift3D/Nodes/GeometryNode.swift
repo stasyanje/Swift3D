@@ -21,40 +21,16 @@ public struct GeometryNode: Node, AcceptsShader {
   
   public let id: String
   public let shape: Shape
+  
+  public var drawCommands: [any MetalDrawable] { [command] }
+  
+  private let command: RenderGeometry
 
   public init(id: String, shape: Shape) {
     self.id = id
     self.shape = shape
-  }
-  
-  public var drawCommands: [any MetalDrawable] {
-    [
-      RenderGeometry(
-        id: id,
-        transform: .identity,
-        geometry: geometry(),
-        shaderPipeline: shaderPipeline(),
-        renderType: .triangles,
-        animations: nil,
-        cullBackfaces: false
-      )
-    ]
-  }
-  
-  private func geometry() -> any MetalDrawable_Geometry {
-    switch shape {
-    case .capsule: Capsule()
-    case .cone: Cone()
-    case .cube: Cube()
-    case .cylinder: Cylinder()
-    case .octa(let divisions): Octahedron(divisions: divisions)
-    case .sphere: Sphere()
-    case .triangle: Triangle()
-    }
-  }
-  
-  private func shaderPipeline() -> UnlitShader {
-    switch shape {
+    
+    let shaderPipeline: UnlitShader = switch shape {
     case .cone,
          .capsule,
          .cylinder,
@@ -65,5 +41,25 @@ public struct GeometryNode: Node, AcceptsShader {
     case .cube:
       UnlitShader(.white)
     }
+    
+    let geometry: MetalDrawable_Geometry = switch shape {
+    case .capsule: Capsule()
+    case .cone: Cone()
+    case .cube: Cube()
+    case .cylinder: Cylinder()
+    case .octa(let divisions): Octahedron(divisions: divisions)
+    case .sphere: Sphere()
+    case .triangle: Triangle()
+    }
+    
+    self.command = RenderGeometry(
+      id: id,
+      transform: .identity,
+      geometry: geometry,
+      shaderPipeline: shaderPipeline,
+      renderType: .triangles,
+      animations: nil,
+      cullBackfaces: false
+    )
   }
 }

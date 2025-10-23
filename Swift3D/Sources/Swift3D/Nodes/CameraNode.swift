@@ -53,20 +53,20 @@ enum CameraProjection {
 
 public struct CameraNode: Node {
   public let id: String
+  
+  public var drawCommands: [any MetalDrawable] { [command] }
+  
+  private let command: PlaceCamera
+  
   public init(id: String) {
     self.id = id
-  }
-  
-  public var drawCommands: [any MetalDrawable] {
-    [
-      PlaceCamera(
-        id: id,
-        transform: .identity,
-        projection: .perspective(.standard),
-        shaderPipeline: nil,
-        animations: nil
-      )
-    ]
+    self.command = PlaceCamera(
+      id: id,
+      transform: .identity,
+      projection: .perspective(.standard),
+      shaderPipeline: nil,
+      animations: nil
+    )
   }
 }
 

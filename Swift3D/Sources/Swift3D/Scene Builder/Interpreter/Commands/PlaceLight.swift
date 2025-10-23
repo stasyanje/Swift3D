@@ -18,20 +18,29 @@ public enum LightDirection: Int {
   case point = 3
 }
 
-struct PlaceLight: MetalDrawable {
+final class PlaceLight: MetalDrawable {
   var id: String
   var transform: MetalDrawableData.Transform
-  
   let direction: LightDirection
   var color: simd_float4
-  
   var animations: [NodeTransition]?
-  
-  private final class Storage {
-    var uniformValues: Light?
-  }
 
-  private let storage = PlaceLight.Storage()
+  private(set) var uniformValues: Light?
+  private var previousUniformValues: Light?
+  
+  init(
+    id: String,
+    transform: MetalDrawableData.Transform,
+    direction: LightDirection,
+    color: simd_float4,
+    animations: [NodeTransition]?
+  ) {
+    self.id = id
+    self.transform = transform
+    self.direction = direction
+    self.color = color
+    self.animations = animations
+  }
 }
 
 // MARK: - Updates
@@ -42,7 +51,7 @@ extension PlaceLight {
     fatalError()
   }
   
-  var uniformValues: Light {
+  private func makeUniformValues() -> Light {
     let position = switch direction {
     case .ambient:
       simd_float4(.zero, Float(direction.rawValue))
@@ -56,11 +65,9 @@ extension PlaceLight {
   }
   
   func update(time: CFTimeInterval) {
-    var previous: Storage? // TODO:
-    
-    storage.uniformValues = uniformValues.attribute(
+    uniformValues = makeUniformValues().attribute(
       at: time,
-      prev: previous?.uniformValues,
+      prev: previousUniformValues,
       animation: animations?.with([.all])
     )
   }
@@ -72,8 +79,9 @@ extension PlaceLight {
     geometryLibrary: MetalGeometryLibrary,
     surfaceAspect: Float
   ) {
-    if let previous = (previous as? PlaceLight)?.storage {
-      storage.uniformValues = previous.uniformValues
+    if let previous = previous as? PlaceLight {
+      previousUniformValues = uniformValues
+      uniformValues = previous.uniformValues
     }
   }
 }
