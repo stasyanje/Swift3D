@@ -56,9 +56,9 @@ extension PlaceLight {
     case .ambient:
       simd_float4(.zero, Float(direction.rawValue))
     case .directional:
-      simd_float4(transform.value.rotation.act(.back), Float(direction.rawValue))
+      simd_float4(transform.rotation.act(.back), Float(direction.rawValue))
     case .point:
-      simd_float4(transform.value.translation, Float(direction.rawValue))
+      simd_float4(transform.translation, Float(direction.rawValue))
     }
     
     return Light(position: position, color: color)

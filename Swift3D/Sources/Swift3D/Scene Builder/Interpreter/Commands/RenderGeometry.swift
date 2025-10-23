@@ -17,7 +17,7 @@ protocol HasShaderPipeline {
 
 // MARK: - NodeRenderCommand
 
-struct RenderGeometry: MetalDrawable, HasShaderPipeline {
+final class RenderGeometry: MetalDrawable, HasShaderPipeline {
   var id: String
   var transform: MetalDrawableData.Transform
   let geometry: any MetalDrawable_Geometry
@@ -26,14 +26,36 @@ struct RenderGeometry: MetalDrawable, HasShaderPipeline {
   var animations: [NodeTransition]?
   let cullBackfaces: Bool
   
-  private final class Storage {
-    var mesh: MTKMesh?
-
+  private struct Storage {
+    var transform: MetalDrawableData.Transform
     var normalMatrix: float3x3 = float3x3(1)
-    var transform: MetalDrawableData.Transform = .identity
+    var mesh: MTKMesh?
   }
   
-  private let storage = RenderGeometry.Storage()
+  private var storage: Storage
+  private var previousTransform: MetalDrawableData.Transform?
+
+  init(
+    id: String,
+    transform: MetalDrawableData.Transform,
+    geometry: any MetalDrawable_Geometry,
+    shaderPipeline: MetalDrawable_Shader,
+    renderType: MetalDrawableData.RenderType?,
+    animations: [NodeTransition]?,
+    cullBackfaces: Bool
+  ) {
+    self.id = id
+    self.transform = transform
+    self.geometry = geometry
+    self.shaderPipeline = shaderPipeline
+    self.renderType = renderType
+    self.animations = animations
+    self.cullBackfaces = cullBackfaces
+
+    self.storage = Storage(transform: transform)
+    // Initialize storage with current transform
+    self.storage.transform = transform
+  }
 }
 
 // MARK: - Render
@@ -48,7 +70,7 @@ extension RenderGeometry {
     encoder.setCullMode(cullBackfaces ? .back : .none)    
     
     // Vertices
-    var bytes = VertexUniform(modelMatrix: storage.transform.value, normalMatrix: storage.normalMatrix)
+    var bytes = VertexUniform(modelMatrix: storage.transform, normalMatrix: storage.normalMatrix)
     encoder.setVertexBytes(&bytes, length: MemoryLayout<VertexUniform>.size, index: 1)
     
     // Shaders and Uniforms
@@ -75,14 +97,11 @@ extension RenderGeometry {
   }
   
   func update(time: CFTimeInterval) {
-    var previous: Storage? // TODO:
-    assert(previous == nil)
-    
-    storage.transform = transform.attribute(
+    storage.transform = LerpableTransform(value: transform).attribute(
       at: time,
-      prev: previous?.transform,
+      prev: previousTransform.flatMap(LerpableTransform.init(value:)),
       animation: animations?.with([.all])
-    )
+    ).value
   }
   
   func build(
@@ -92,9 +111,9 @@ extension RenderGeometry {
     geometryLibrary: MetalGeometryLibrary,
     surfaceAspect: Float
   ) {
-    let previous = (previous as? RenderGeometry)?.storage
+    previousTransform = storage.transform
 
-    if let previous = previous {
+    if let previous = (previous as? RenderGeometry)?.storage {
       storage.transform = previous.transform
       storage.mesh = previous.mesh
     } else {

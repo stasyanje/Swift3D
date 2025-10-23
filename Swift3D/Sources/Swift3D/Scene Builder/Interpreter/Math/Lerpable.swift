@@ -47,7 +47,9 @@ extension SIMD4<Float>: Lerpable  {
   }
 }
 
-extension MetalDrawableData.Transform: Lerpable {
+struct LerpableTransform: Lerpable {
+  let value: float4x4
+  
   static func lerp(_ from: Self, _ to: Self, _ percent: Float) -> Self {
     let fromT = from.value.translation
     let fromR = from.value.rotation

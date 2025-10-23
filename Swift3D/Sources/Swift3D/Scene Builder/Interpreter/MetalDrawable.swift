@@ -14,17 +14,7 @@ import simd
 public enum MetalDrawableData {}
 
 extension MetalDrawableData {
-  public struct Transform {
-    public let value: float4x4
-
-    static func transform(_ value: float4x4) -> Transform {
-      .init(value: value)
-    }
-    
-    static var identity: Transform {
-      .init(value: .identity)
-    }
-  }
+  public typealias Transform = float4x4
 }
 
 // MARK: - Metal Drawable

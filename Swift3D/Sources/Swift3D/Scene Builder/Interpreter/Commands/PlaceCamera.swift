@@ -55,9 +55,7 @@ extension PlaceCamera {
     encoder.endEncoding()
   }
 
-  var latestViewPoint: float4x4 {
-    self.storage.view.value
-  }
+  var latestViewPoint: float4x4 { storage.view }
   
   func update(time: CFTimeInterval) {
     var previous: PlaceCamera.Storage? // TODO: restore passing previous
@@ -121,8 +119,8 @@ private extension PlaceCamera {
     
     func updateBuffers(transform: MetalDrawableData.Transform, projection: float4x4) {
       // Update matrices
-      self.view = .init(value: transform.value)
-      let view = view.value.inverse
+      self.view = transform
+      let view = view.inverse
       self.projection = projection
       
       // Update uniform

@@ -18,7 +18,7 @@ public struct TransformModifier: NodeModifier {
   public func drawCommands(content: any Node) -> [any MetalDrawable] {    
     content.drawCommands.map { command in
       var command = command
-      command.transform = .transform(transform.value * command.transform.value)
+      command.transform = transform * command.transform
       return command
     }
   }
@@ -28,7 +28,7 @@ public struct TransformModifier: NodeModifier {
 
 extension Node {
  public func transform(_ transform: float4x4) -> ModifiedNodeContent<Self, TransformModifier> {
-   self.modifier(TransformModifier(transform: .transform(transform)))
+   self.modifier(TransformModifier(transform: transform))
   }
 
   public func translated(_ translation: simd_float3) -> ModifiedNodeContent<Self, TransformModifier> {

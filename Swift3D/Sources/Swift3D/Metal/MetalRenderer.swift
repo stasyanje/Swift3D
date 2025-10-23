@@ -128,12 +128,16 @@ public class MetalRenderer {
   }
 
   private func standardFragmentUniform(from commands: [any MetalDrawable], lightCount: Int) -> StandardFragmentUniform {
+    var camPos: simd_float4 = .zero
+    
     if let cameraCommand = commands.first(where: { $0 is PlaceCamera }) as? PlaceCamera {
-      return StandardFragmentUniform(camPos: simd_float4(cameraCommand.transform.value.translation, 1),
-                                     lightCount: simd_float4(x: Float(lightCount), y: 0, z: 0, w: 0))
+      camPos = simd_float4(cameraCommand.transform.translation, 1)
     }
     
-    return StandardFragmentUniform(camPos: .zero, lightCount: simd_float4(x: Float(lightCount), y: 0, z: 0, w: 0))
+    return StandardFragmentUniform(
+      camPos: camPos,
+      lightCount: simd_float4(x: Float(lightCount), y: 0, z: 0, w: 0)
+    )
   }
 
   private func viewProjectionBuffer(from commands: [any MetalDrawable]) -> MTLBuffer? {

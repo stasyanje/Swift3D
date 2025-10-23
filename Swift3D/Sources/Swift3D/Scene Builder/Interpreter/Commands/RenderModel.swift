@@ -42,7 +42,7 @@ extension RenderModel {
     encoder.setCullMode(.back)
 
     // Vertices
-    var bytes = VertexUniform(modelMatrix: storage.transform.value, normalMatrix: storage.normalMatrix)
+    var bytes = VertexUniform(modelMatrix: storage.transform, normalMatrix: storage.normalMatrix)
     encoder.setVertexBytes(&bytes, length: MemoryLayout<VertexUniform>.size, index: 1)
     
     shaderPipeline.setupEncoder(encoder: encoder)
