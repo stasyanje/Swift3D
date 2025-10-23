@@ -26,7 +26,9 @@ struct PlaceCamera: MetalDrawable {
   var shaderPipeline: (any MetalDrawable_Shader)?
   var animations: [NodeTransition]?
   
-  let storage: PlaceCamera.Storage
+  var viewProjBuffer: MTLBuffer? { storage.viewProjBuffer }
+  
+  private let storage = PlaceCamera.Storage()
 }
 
 // MARK: - Updates
@@ -52,102 +54,86 @@ extension PlaceCamera {
     encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
     encoder.endEncoding()
   }
-  
-  func update(time: CFTimeInterval) {
-    storage.update(time: time, command: self, previous: nil)
-  }
 
   var latestViewPoint: float4x4 {
     self.storage.view.value
   }
-}
+  
+  func update(time: CFTimeInterval) {
+    var previous: PlaceCamera.Storage? // TODO: restore passing previous
+    assert(previous == nil)
 
-// MARK: Storage
-extension PlaceCamera {
-  class Storage: MetalDrawable_Storage {
-    private(set) var surfaceAspect: Float = 1
-    private(set) var viewProjBuffer: MTLBuffer?
-
-    private(set) var view: MetalDrawableData.Transform = .identity
-    private(set) var projection: float4x4?
-    var skyboxInverseView: float4x4 = .identity
-  }
-}
-
-extension PlaceCamera.Storage {
-  private func updateBuffers(transform: MetalDrawableData.Transform, projection: float4x4) {
-    // Update matrices
-    self.view = .init(value: transform.value)
-    let view = view.value.inverse
-    self.projection = projection
-    
-    // Update uniform
-    let vpUniform = ViewProjectionUniform(projectionMatrix: projection, viewMatrix: view)
-    self.viewProjBuffer?.contents().storeBytes(of: vpUniform, as: ViewProjectionUniform.self)
-    
-    // Skybox inverse view matrix.
-    var viewDirectionMatrix = view
-    viewDirectionMatrix.columns.3 = SIMD4<Float>(0, 0, 0, 1)
-    let clipToViewDirectionTransform = (projection * viewDirectionMatrix).inverse
-    self.skyboxInverseView = clipToViewDirectionTransform
-  }
-
-  func update(
-    time: CFTimeInterval,
-    command: any MetalDrawable,
-    previous: (any MetalDrawable_Storage)?
-  ) {
-    let previous = previous as? Self
-    guard let command = command as? PlaceCamera else {
-      fatalError()
-    }
-
-    let view = command.transform.attribute(
+    let view = transform.attribute(
       at: time,
       prev: previous?.view,
-      animation: command.animations?.with([.all])
+      animation: animations?.with([.all])
     )
 
-    let targetProj = command.projection.matrix(aspect: self.surfaceAspect)
+    let targetProj = projection.matrix(aspect: storage.surfaceAspect)
     let projection = targetProj.attribute(
       at: time,
       prev: previous?.projection,
-      animation: command.animations?.with([.all])
+      animation: animations?.with([.all])
     )
     
-    updateBuffers(transform: view, projection: projection)
+    storage.updateBuffers(transform: view, projection: projection)
   }
   
-  func build(_ command: (any MetalDrawable),
-               previous: (any MetalDrawable_Storage)?,
-               device: MTLDevice, 
-               shaderLibrary: MetalShaderLibrary,
-               geometryLibrary: MetalGeometryLibrary,
-               surfaceAspect: Float) {
-    let previous = previous as? Self
-    guard let command = command as? PlaceCamera else {
-      fatalError()
-    }
-
-    self.surfaceAspect = surfaceAspect
+  func build(
+    previous: MetalDrawable?,
+    device: MTLDevice,
+    shaderLibrary: MetalShaderLibrary,
+    geometryLibrary: MetalGeometryLibrary,
+    surfaceAspect: Float
+  ) {
+    storage.surfaceAspect = surfaceAspect
 
     // Build the Pipeline
-    command.shaderPipeline?.build(device: device, library: shaderLibrary, descriptor: nil)
+    shaderPipeline?.build(device: device, library: shaderLibrary, descriptor: nil)
     
     // Re-use previous buffers if they are the right size / data and
     // copy data from previous storage for animations.
-    if let previous = previous {
-      viewProjBuffer = previous.viewProjBuffer
-      view = previous.view
-      projection = previous.projection
-      skyboxInverseView = previous.skyboxInverseView
+    if let previous = previous as? Self {
+      storage.viewProjBuffer = previous.storage.viewProjBuffer
+      storage.view = previous.storage.view
+      storage.projection = previous.storage.projection
+      storage.skyboxInverseView = previous.storage.skyboxInverseView
     } else {
       // Make the buffers / data from scratch!
-      viewProjBuffer = device.makeBuffer(length: MemoryLayout<ViewProjectionUniform>.size)
-      updateBuffers(
-        transform: command.transform,
-        projection: command.projection.matrix(aspect: surfaceAspect)
+      storage.viewProjBuffer = device.makeBuffer(length: MemoryLayout<ViewProjectionUniform>.size)
+      storage.updateBuffers(
+        transform: transform,
+        projection: projection.matrix(aspect: surfaceAspect)
       )
+    }
+  }
+}
+
+// MARK: Storage
+private extension PlaceCamera {
+  final class Storage {
+    var surfaceAspect: Float = 1
+    var viewProjBuffer: MTLBuffer?
+
+    var view: MetalDrawableData.Transform = .identity
+    var projection: float4x4?
+    var skyboxInverseView: float4x4 = .identity
+    
+    func updateBuffers(transform: MetalDrawableData.Transform, projection: float4x4) {
+      // Update matrices
+      self.view = .init(value: transform.value)
+      let view = view.value.inverse
+      self.projection = projection
+      
+      // Update uniform
+      let vpUniform = ViewProjectionUniform(projectionMatrix: projection, viewMatrix: view)
+      self.viewProjBuffer?.contents().storeBytes(of: vpUniform, as: ViewProjectionUniform.self)
+      
+      // Skybox inverse view matrix.
+      var viewDirectionMatrix = view
+      viewDirectionMatrix.columns.3 = SIMD4<Float>(0, 0, 0, 1)
+      let clipToViewDirectionTransform = (projection * viewDirectionMatrix).inverse
+      self.skyboxInverseView = clipToViewDirectionTransform
     }
   }
 }

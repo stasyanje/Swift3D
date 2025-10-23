@@ -39,9 +39,8 @@ final class MetalScene3D {
   
   private func buildCommands(surfaceAspect: Float) -> [any MetalDrawable] {
     contentFactory().drawCommands.map { [commands] command in
-      command.storage.build(
-        command,
-        previous: commands.first { $0.id == command.id }?.storage,
+      command.build(
+        previous: commands.first { $0.id == command.id },
         device: device,
         shaderLibrary: shaderLibrary,
         geometryLibrary: geometryLibrary,

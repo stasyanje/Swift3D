@@ -36,7 +36,6 @@ public struct GeometryNode: Node, AcceptsShader {
         shaderPipeline: shaderPipeline(),
         renderType: .triangles,
         animations: nil,
-        storage: RenderGeometry.Storage(),
         cullBackfaces: false
       )
     ]

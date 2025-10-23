@@ -58,12 +58,15 @@ public struct CameraNode: Node {
   }
   
   public var drawCommands: [any MetalDrawable] {
-    [PlaceCamera(id: id, 
-                 transform: .identity,
-                 projection: .perspective(.standard),
-                 shaderPipeline: nil,
-                 animations: nil,
-                 storage: PlaceCamera.Storage())]
+    [
+      PlaceCamera(
+        id: id,
+        transform: .identity,
+        projection: .perspective(.standard),
+        shaderPipeline: nil,
+        animations: nil
+      )
+    ]
   }
 }
 

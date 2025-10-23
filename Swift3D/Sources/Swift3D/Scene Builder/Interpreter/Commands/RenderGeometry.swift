@@ -24,8 +24,16 @@ struct RenderGeometry: MetalDrawable, HasShaderPipeline {
   var shaderPipeline: MetalDrawable_Shader
   let renderType: MetalDrawableData.RenderType?
   var animations: [NodeTransition]?
-  let storage: RenderGeometry.Storage
   let cullBackfaces: Bool
+  
+  private final class Storage {
+    var mesh: MTKMesh?
+
+    var normalMatrix: float3x3 = float3x3(1)
+    var transform: MetalDrawableData.Transform = .identity
+  }
+  
+  private let storage = RenderGeometry.Storage()
 }
 
 // MARK: - Render
@@ -67,63 +75,40 @@ extension RenderGeometry {
   }
   
   func update(time: CFTimeInterval) {
-    storage.update(time: time, command: self, previous: nil)
-  }
-}
-
-// MARK: - Storage
-
-extension RenderGeometry {
-  class Storage: MetalDrawable_Storage {
-    private(set) var mesh: MTKMesh?
-
-    private(set) var normalMatrix: float3x3 = float3x3(1)
-    private(set) var transform: MetalDrawableData.Transform = .identity
-  }
-}
-
-extension RenderGeometry.Storage {
-  func update(
-    time: CFTimeInterval,
-    command: any MetalDrawable,
-    previous: (any MetalDrawable_Storage)?
-  ) {
-    transform = command.transform.attribute(
+    var previous: Storage? // TODO:
+    assert(previous == nil)
+    
+    storage.transform = transform.attribute(
       at: time,
-      prev: (previous as? RenderGeometry.Storage)?.transform,
-      animation: command.animations?.with([.all])
+      prev: previous?.transform,
+      animation: animations?.with([.all])
     )
   }
   
-  func build(_ command: (any MetalDrawable),
-             previous: (any MetalDrawable_Storage)?,
-             device: MTLDevice,
-             shaderLibrary: MetalShaderLibrary,
-             geometryLibrary: MetalGeometryLibrary,
-             surfaceAspect: Float) {
-    guard let command = command as? RenderGeometry else {
-      fatalError()
-    }
-    
-    let previous = previous as? RenderGeometry.Storage
+  func build(
+    previous: MetalDrawable?,
+    device: MTLDevice,
+    shaderLibrary: MetalShaderLibrary,
+    geometryLibrary: MetalGeometryLibrary,
+    surfaceAspect: Float
+  ) {
+    let previous = (previous as? RenderGeometry)?.storage
 
     if let previous = previous {
-      self.transform = previous.transform
-      self.mesh = previous.mesh
+      storage.transform = previous.transform
+      storage.mesh = previous.mesh
     } else {
-      self.transform = command.transform
-      self.mesh = try! geometryLibrary.cachedMesh(command.geometry)
+      storage.transform = transform
+      storage.mesh = try! geometryLibrary.cachedMesh(geometry)
     }
     
     // set up our shader pipeline
     var vertexDescriptor: MTLVertexDescriptor?
-    if let modelDescriptor = self.mesh?.vertexDescriptor {
+    if let modelDescriptor = storage.mesh?.vertexDescriptor {
       vertexDescriptor = MTKMetalVertexDescriptorFromModelIO(modelDescriptor)
     }
 
-    command.shaderPipeline.build(device: device,
-                                 library: shaderLibrary,
-                                 descriptor: vertexDescriptor)
+    shaderPipeline.build(device: device, library: shaderLibrary, descriptor: vertexDescriptor)
   }
 }
 

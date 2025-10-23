@@ -26,8 +26,12 @@ struct PlaceLight: MetalDrawable {
   var color: simd_float4
   
   var animations: [NodeTransition]?
+  
+  private final class Storage {
+    var uniformValues: Light?
+  }
 
-  let storage: PlaceLight.Storage
+  private let storage = PlaceLight.Storage()
 }
 
 // MARK: - Updates
@@ -36,10 +40,6 @@ extension PlaceLight {
   var needsRender: Bool { false }
   func render(encoder: MTLRenderCommandEncoder, depthStencil: MTLDepthStencilState?) {
     fatalError()
-  }
-  
-  func update(time: CFTimeInterval) {
-    storage.update(time: time, command: self, previous: nil)
   }
   
   var uniformValues: Light {
@@ -54,41 +54,26 @@ extension PlaceLight {
     
     return Light(position: position, color: color)
   }
-}
-
-// MARK: Storage
-
-extension PlaceLight {
-  class Storage: MetalDrawable_Storage {
-    private(set) var uniformValues: Light?
-  }
-}
-
-extension PlaceLight.Storage {
-  func update(
-    time: CFTimeInterval,
-    command: any MetalDrawable,
-    previous: (any MetalDrawable_Storage)?
-  ) {
-    guard let command = command as? PlaceLight else {
-      fatalError()
-    }
-
-    uniformValues = command.uniformValues.attribute(
+  
+  func update(time: CFTimeInterval) {
+    var previous: Storage? // TODO:
+    
+    storage.uniformValues = uniformValues.attribute(
       at: time,
-      prev: (previous as? PlaceLight.Storage)?.uniformValues,
-      animation: command.animations?.with([.all])
+      prev: previous?.uniformValues,
+      animation: animations?.with([.all])
     )
   }
 
-  func build(_ command: (any MetalDrawable),
-               previous: (any MetalDrawable_Storage)?,
-               device: MTLDevice, 
-               shaderLibrary: MetalShaderLibrary,
-               geometryLibrary: MetalGeometryLibrary,
-               surfaceAspect: Float) {
-    if let previous = previous as? PlaceLight.Storage {
-      self.uniformValues = previous.uniformValues
+  func build(
+    previous: MetalDrawable?,
+    device: MTLDevice,
+    shaderLibrary: MetalShaderLibrary,
+    geometryLibrary: MetalGeometryLibrary,
+    surfaceAspect: Float
+  ) {
+    if let previous = (previous as? PlaceLight)?.storage {
+      storage.uniformValues = previous.uniformValues
     }
   }
 }

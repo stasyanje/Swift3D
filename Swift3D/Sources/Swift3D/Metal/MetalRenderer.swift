@@ -138,7 +138,7 @@ public class MetalRenderer {
 
   private func viewProjectionBuffer(from commands: [any MetalDrawable]) -> MTLBuffer? {
     if let cameraCommand = commands.first(where: { $0 is PlaceCamera }) as? PlaceCamera {
-      return cameraCommand.storage.viewProjBuffer
+      return cameraCommand.viewProjBuffer
     }
 
     return defaultProjViewBuffer

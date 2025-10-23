@@ -20,7 +20,14 @@ struct RenderModel: MetalDrawable, HasShaderPipeline {
   var shaderPipeline: MetalDrawable_Shader
   var overrideTextures: Bool
   var animations: [NodeTransition]?
-  let storage: RenderModel.Storage
+  
+  private final class Storage {
+    var normalMatrix: float3x3 = float3x3(1)
+    var transform: MetalDrawableData.Transform = .identity
+    var meshAndTextures: MeshAndTextureStorage?
+  }
+  
+  private let storage = Storage()
 }
 
 // MARK: - Render
@@ -49,62 +56,42 @@ extension RenderModel {
     encoder.endEncoding()
   }
   
-  func update(time: CFTimeInterval) {
-    storage.update(time: time, command: self, previous: nil)
-  }
-}
-
-// MARK: - Storage
-
-extension RenderModel {
-  class Storage: MetalDrawable_Storage {
-    private(set) var normalMatrix: float3x3 = float3x3(1)
-    private(set) var transform: MetalDrawableData.Transform = .identity
-
-    fileprivate var meshAndTextures: MeshAndTextureStorage?
-  }
-}
-
-extension RenderModel.Storage {
-  fileprivate func update(
-    time: CFTimeInterval,
-    command: any MetalDrawable,
-    previous: (any MetalDrawable_Storage)?
-  ) {
-    transform = command.transform.attribute(
+  func update(time: Double) {
+    var previous: Storage?
+    
+    assert(previous == nil)
+    storage.transform = transform.attribute(
       at: time,
-      prev: (previous as? RenderGeometry.Storage)?.transform,
-      animation: command.animations?.with([.all])
+      prev: previous?.transform,
+      animation: animations?.with([.all])
     )
   }
 
-  func build(_ command: (any MetalDrawable),
-             previous: (any MetalDrawable_Storage)?,
-             device: MTLDevice,
-             shaderLibrary: MetalShaderLibrary,
-             geometryLibrary: MetalGeometryLibrary,
-             surfaceAspect: Float) {
-    guard let command = command as? RenderModel else {
-      fatalError()
-    }
-
-    if let previous = previous as? RenderModel.Storage {
-      transform = previous.transform
-      normalMatrix = previous.normalMatrix
-      meshAndTextures = previous.meshAndTextures
+  func build(
+    previous: MetalDrawable?,
+    device: MTLDevice,
+    shaderLibrary: MetalShaderLibrary,
+    geometryLibrary: MetalGeometryLibrary,
+    surfaceAspect: Float
+  ) {
+    if let previous = (previous as? RenderModel)?.storage {
+      storage.transform = previous.transform
+      storage.normalMatrix = previous.normalMatrix
+      storage.meshAndTextures = previous.meshAndTextures
     } else {
-      meshAndTextures = .init(device: device)
-      meshAndTextures?.build(model: command.model,
-                             geometryLibrary: geometryLibrary,
-                             shaderLibrary: shaderLibrary)
-
-      self.transform = command.transform
+      storage.meshAndTextures = .init(device: device)
+      storage.meshAndTextures?.build(
+        model: model,
+        geometryLibrary: geometryLibrary,
+        shaderLibrary: shaderLibrary
+      )
+      storage.transform = transform
     }
 
-    command.shaderPipeline.build(
+    shaderPipeline.build(
       device: device,
       library: shaderLibrary,
-      descriptor: meshAndTextures?.vertexDescriptor
+      descriptor: storage.meshAndTextures?.vertexDescriptor
     )
   }
 }

@@ -27,30 +27,25 @@ extension MetalDrawableData {
   }
 }
 
-// MARK: - Data Storage
-public protocol MetalDrawable_Storage {
-  func build(_ command: (any MetalDrawable),
-               previous: (any MetalDrawable_Storage)?,
-               device: MTLDevice, 
-               shaderLibrary: MetalShaderLibrary,
-               geometryLibrary: MetalGeometryLibrary,
-               surfaceAspect: Float)
-}
-
 // MARK: - Metal Drawable
 
 public protocol MetalDrawable {
-  associatedtype Storage: MetalDrawable_Storage
-  
   var id: String { get set }
   var transform: MetalDrawableData.Transform { get set }
   var animations: [NodeTransition]? { get set }
   
-  var storage: Storage { get }
   var needsRender: Bool { get }
   
   func update(time: CFTimeInterval)
   func render(encoder: MTLRenderCommandEncoder, depthStencil: MTLDepthStencilState?)
+  
+  func build(
+    previous: MetalDrawable?,
+    device: MTLDevice,
+    shaderLibrary: MetalShaderLibrary,
+    geometryLibrary: MetalGeometryLibrary,
+    surfaceAspect: Float
+  )
 }
 
 // MARK: - Animated Attributes
