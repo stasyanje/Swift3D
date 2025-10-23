@@ -44,11 +44,11 @@ struct PBRSample: View {
 
   private var lights: some Node {
     GroupNode(id: "Lights") {
-      AmbientLightNode(id: "ambient")
+      LightNode(id: "ambient", direction: .ambient)
         .colored(color: .white, intensity: 0.1)
 
       GroupNode(id: "White Light") {
-        PointLightNode(id: "light")
+        LightNode(id: "light", direction: .point)
           .colored(color: .white, intensity: 8)
 
         GeometryNode(id: "sphere", shape: .sphere)
@@ -59,7 +59,7 @@ struct PBRSample: View {
       .rotated(angle: rotation, axis: .right)
 
       GroupNode(id: "Green Light") {
-        PointLightNode(id: "light")
+        LightNode(id: "light", direction: .point)
           .colored(color: .green, intensity: 8)
 
         GeometryNode(id: "sphere", shape: .sphere)
@@ -70,7 +70,7 @@ struct PBRSample: View {
       .rotated(angle: rotation, axis: .up + .left)
 
       GroupNode(id: "Red Light") {
-        PointLightNode(id: "light")
+        LightNode(id: "light", direction: .point)
           .colored(color: .purple, intensity: 8)
 
         GeometryNode(id: "sphere", shape: .sphere)

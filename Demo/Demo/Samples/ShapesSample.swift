@@ -80,12 +80,12 @@ struct ShapesSample: View {
 
   private var funLights: some Node {
     GroupNode(id: "lights") {
-      AmbientLightNode(id: "Ambient")
+      LightNode(id: "Ambient", direction: .ambient)
         .colored(color: .white.opacity(0.15))
-      DirectionalLightNode(id: "Directional")
+      LightNode(id: "Directional", direction: .directional)
         .colored(color: .orange.opacity(0.4))
         .transform(.lookAt(eye: .zero, look: simd_float3(x: 0.5, y: 0.5, z: 0.5), up: .up))
-      DirectionalLightNode(id: "Directional2")
+      LightNode(id: "Directional2", direction: .directional)
         .colored(color: .blue.opacity(0.5))
         .transform(.lookAt(eye: .zero, look: simd_float3(x: -0.5, y: -0.5, z: 0.5), up: .up))
     }

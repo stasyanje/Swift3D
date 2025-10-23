@@ -12,11 +12,17 @@ import simd
 
 // MARK: - Command
 
+public enum LightDirection: Int {
+  case ambient = 1
+  case directional = 2
+  case point = 3
+}
+
 struct PlaceLight: MetalDrawable {
   var id: String
   var transform: MetalDrawableData.Transform
   
-  let type: LightType
+  let direction: LightDirection
   var color: simd_float4
   
   var animations: [NodeTransition]?
@@ -37,22 +43,16 @@ extension PlaceLight {
   }
   
   var uniformValues: Light {
-
-    switch type {
+    let position = switch direction {
     case .ambient:
-      return Light(position: simd_float4(.zero, Float(type.rawValue)),
-                                         color: color)
+      simd_float4(.zero, Float(direction.rawValue))
     case .directional:
-      let direction = transform.value.rotation.act(.back)
-      return Light(position: simd_float4(direction,
-                                         Float(type.rawValue)),
-                                         color: color)
+      simd_float4(transform.value.rotation.act(.back), Float(direction.rawValue))
     case .point:
-      let pos = transform.value.translation
-      return Light(position: simd_float4(pos,
-                                         Float(type.rawValue)),
-                                         color: color)
+      simd_float4(transform.value.translation, Float(direction.rawValue))
     }
+    
+    return Light(position: position, color: color)
   }
 }
 
@@ -90,13 +90,5 @@ extension PlaceLight.Storage {
     if let previous = previous as? PlaceLight.Storage {
       self.uniformValues = previous.uniformValues
     }
-  }
-}
-
-extension PlaceLight {
-  enum LightType: Int {
-    case ambient = 1
-    case directional = 2
-    case point = 3
   }
 }
