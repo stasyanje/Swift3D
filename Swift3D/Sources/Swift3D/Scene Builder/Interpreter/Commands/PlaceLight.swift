@@ -47,21 +47,8 @@ final class PlaceLight: MetalDrawable {
 
 extension PlaceLight {  
   var needsRender: Bool { false }
-  func render(encoder: MTLRenderCommandEncoder, depthStencil: MTLDepthStencilState?) {
-    fatalError()
-  }
-  
-  private func makeUniformValues() -> Light {
-    let position = switch direction {
-    case .ambient:
-      simd_float4(.zero, Float(direction.rawValue))
-    case .directional:
-      simd_float4(transform.rotation.act(.back), Float(direction.rawValue))
-    case .point:
-      simd_float4(transform.translation, Float(direction.rawValue))
-    }
-    
-    return Light(position: position, color: color)
+  func render(encoder: MTLRenderCommandEncoder, depthStencil: MTLDepthStencilState) {
+    // no-op
   }
   
   func update(time: CFTimeInterval) {
@@ -83,5 +70,18 @@ extension PlaceLight {
       previousUniformValues = uniformValues
       uniformValues = previous.uniformValues
     }
+  }
+  
+  private func makeUniformValues() -> Light {
+    let position = switch direction {
+    case .ambient:
+      simd_float4(.zero, Float(direction.rawValue))
+    case .directional:
+      simd_float4(transform.rotation.act(.back), Float(direction.rawValue))
+    case .point:
+      simd_float4(transform.translation, Float(direction.rawValue))
+    }
+    
+    return Light(position: position, color: color)
   }
 }

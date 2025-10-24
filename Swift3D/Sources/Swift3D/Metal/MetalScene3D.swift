@@ -24,7 +24,7 @@ final class MetalScene3D {
     self.contentFactory = contentFactory
   }
   
-  func buildCommands(surfaceAspect: Float, time: Double, invalidate: Bool) -> [any MetalDrawable] {
+  func prepareCommands(surfaceAspect: Float, time: Double, invalidate: Bool) -> [any MetalDrawable] {
     if invalidate {
       commands = buildCommands(surfaceAspect: surfaceAspect)
     }

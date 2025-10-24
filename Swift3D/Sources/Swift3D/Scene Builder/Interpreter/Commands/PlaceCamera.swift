@@ -37,7 +37,7 @@ extension PlaceCamera {
   var needsRender: Bool { shaderPipeline != nil }
 
   // Render our skybox.
-  func render(encoder: MTLRenderCommandEncoder, depthStencil: MTLDepthStencilState?) {
+  func render(encoder: MTLRenderCommandEncoder, depthStencil: MTLDepthStencilState) {
     guard let shaderPipeline = shaderPipeline else {
       fatalError()
     }

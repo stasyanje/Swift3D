@@ -63,7 +63,7 @@ final class RenderGeometry: MetalDrawable, HasShaderPipeline {
 extension RenderGeometry {    
   var needsRender: Bool { true }
   
-  func render(encoder: MTLRenderCommandEncoder, depthStencil: MTLDepthStencilState?) {
+  func render(encoder: MTLRenderCommandEncoder, depthStencil: MTLDepthStencilState) {
     // Depth and Stencil
     encoder.setDepthStencilState(depthStencil)
     encoder.setFrontFacing(.counterClockwise)

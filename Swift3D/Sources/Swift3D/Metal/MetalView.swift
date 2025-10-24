@@ -5,6 +5,8 @@ import Metal
 import MetalKit
 
 public class MetalView: UIView {
+  @available(*, unavailable) public required init?(coder: NSCoder) { nil }
+  
   private enum Error: Swift.Error {
     case deviceInit
   }
@@ -23,9 +25,6 @@ public class MetalView: UIView {
   private var preferredTimeBetweenUpdates = 0.0
     
   // MARK: Setup / Teardown
-  
-  @available(*, unavailable)
-  public required init?(coder: NSCoder) { nil }
   
   public init(
     preferredFps: Int,
@@ -81,7 +80,7 @@ public class MetalView: UIView {
       updateLoop(delta)
     }
     
-    let commands = scene.buildCommands(
+    let commands = scene.prepareCommands(
       surfaceAspect: Float(bounds.width / bounds.height),
       time: time,
       invalidate: newFrame

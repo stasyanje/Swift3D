@@ -27,7 +27,7 @@ public protocol MetalDrawable {
   var needsRender: Bool { get }
   
   func update(time: CFTimeInterval)
-  func render(encoder: MTLRenderCommandEncoder, depthStencil: MTLDepthStencilState?)
+  func render(encoder: MTLRenderCommandEncoder, depthStencil: MTLDepthStencilState)
   
   func build(
     previous: MetalDrawable?,
