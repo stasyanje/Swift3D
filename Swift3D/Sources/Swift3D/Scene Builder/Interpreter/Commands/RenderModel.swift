@@ -18,51 +18,26 @@ struct RenderModel: MetalDrawable, HasShaderPipeline {
   var transform: MetalDrawableData.Transform
   let model: Model
   var shaderPipeline: MetalDrawable_Shader
+  var needsRender: Bool { true }
+  
   var overrideTextures: Bool
   var animations: [NodeTransition]?
   
   private final class Storage {
-    var normalMatrix: float3x3 = float3x3(1)
     var transform: MetalDrawableData.Transform = .identity
+    var previousTransform: MetalDrawableData.Transform?
+    var normalMatrix: float3x3 = float3x3(1)
     var meshAndTextures: MeshAndTextureStorage?
   }
   
   private let storage = Storage()
-}
-
-// MARK: - Render
-
-extension RenderModel {
-  var needsRender: Bool { true }
-
-  func render(encoder: MTLRenderCommandEncoder, depthStencil: MTLDepthStencilState) {
-    // Depth and Stencil
-    encoder.setDepthStencilState(depthStencil)
-    encoder.setFrontFacing(.counterClockwise)
-    encoder.setCullMode(.back)
-
-    // Vertices
-    var bytes = VertexUniform(modelMatrix: storage.transform, normalMatrix: storage.normalMatrix)
-    encoder.setVertexBytes(&bytes, length: MemoryLayout<VertexUniform>.size, index: 1)
-    
-    shaderPipeline.setupEncoder(encoder: encoder)
-    if overrideTextures {
-      shaderPipeline.setTextures(encoder: encoder)
-    }
-
-    storage.meshAndTextures?.draw(encoder: encoder,
-                                  useModelTextures: !overrideTextures)
-
-    encoder.endEncoding()
-  }
+  
+  // MARK: - MetalDrawable
   
   func update(time: Double) {
-    var previous: Storage?
-    
-    assert(previous == nil)
     storage.transform = transform.attribute(
       at: time,
-      prev: previous?.transform,
+      prev: storage.previousTransform,
       animation: animations?.with([.all])
     )
   }
@@ -74,6 +49,8 @@ extension RenderModel {
     geometryLibrary: MetalGeometryLibrary,
     surfaceAspect: Float
   ) {
+    storage.previousTransform = storage.transform
+    
     if let previous = (previous as? RenderModel)?.storage {
       storage.transform = previous.transform
       storage.normalMatrix = previous.normalMatrix
@@ -94,134 +71,146 @@ extension RenderModel {
       descriptor: storage.meshAndTextures?.vertexDescriptor
     )
   }
+
+  func render(encoder: MTLRenderCommandEncoder, depthStencil: MTLDepthStencilState) {
+    // Depth and Stencil
+    encoder.setDepthStencilState(depthStencil)
+    encoder.setFrontFacing(.counterClockwise)
+    encoder.setCullMode(.back)
+
+    // Vertices
+    var bytes = VertexUniform(modelMatrix: storage.transform, normalMatrix: storage.normalMatrix)
+    encoder.setVertexBytes(&bytes, length: MemoryLayout<VertexUniform>.size, index: 1)
+    
+    shaderPipeline.setupEncoder(encoder: encoder)
+    if overrideTextures {
+      shaderPipeline.setTextures(encoder: encoder)
+    }
+
+    storage.meshAndTextures?.draw(
+      encoder: encoder,
+      useModelTextures: !overrideTextures
+    )
+
+    encoder.endEncoding()
+  }
 }
 
 // MARK: - Model + Texture
 
-typealias StorageMesh = (MTKMesh, MDLMesh)
-extension RenderModel {
-  fileprivate class MeshAndTextureStorage {
-    let device: MTLDevice
+private final class MeshAndTextureStorage {
+  private typealias StorageMesh = (MTKMesh, MDLMesh)
+  
+  private let device: MTLDevice
+  private let supportedSemantics: [MDLMaterialSemantic]
 
-    private lazy var textureLoader: MTKTextureLoader = {
-      MTKTextureLoader(device: device)
-    }()
-    private(set) var textures: [String: MTLTexture] = [:]
-    private(set) var mesh: [StorageMesh] = []
+  private lazy var textureLoader = MTKTextureLoader(device: device)
+  
+  private var textures: [String: MTLTexture] = [:]
+  private var meshes: [StorageMesh] = []
 
-    var vertexDescriptor: MTLVertexDescriptor? {
-      if let modelDesc = mesh.first?.0.vertexDescriptor {
-        return MTKMetalVertexDescriptorFromModelIO(modelDesc)
+  var vertexDescriptor: MTLVertexDescriptor? {
+    if let modelDesc = meshes.first?.0.vertexDescriptor {
+      return MTKMetalVertexDescriptorFromModelIO(modelDesc)
+    }
+    return nil
+  }
+  
+  init(device: MTLDevice) {
+    self.device = device
+    
+    self.supportedSemantics = [
+      .baseColor,
+      .tangentSpaceNormal,
+      .emission,
+      .metallic,
+      .roughness,
+      .ambientOcclusion
+    ]
+  }
+
+  func build(model: Model, geometryLibrary: MetalGeometryLibrary, shaderLibrary: MetalShaderLibrary) {
+    do {
+      meshes = try loadMeshes(model: model, geometryLibrary: geometryLibrary)
+    } catch {
+      fatalError("RenderModel Model Failure \(String(describing: error))")
+    }
+    
+    loadTextures(shaderLibrary: shaderLibrary)
+  }
+
+  func draw(encoder: MTLRenderCommandEncoder, useModelTextures: Bool) {
+    for storageMesh in meshes {
+      for (i, buffer) in storageMesh.0.vertexBuffers.enumerated() {
+        encoder.setVertexBuffer(buffer.buffer, offset: buffer.offset, index: i)
       }
-      return nil
-    }
 
-    init(device: MTLDevice) {
-      self.device = device
-    }
-
-    func build(model: Model, geometryLibrary: MetalGeometryLibrary, shaderLibrary: MetalShaderLibrary) {
-      do {
-        let asset = try model.asset(device: device, allocator: geometryLibrary.allocator)
-        asset.loadTextures()
-
-        guard let mdlMeshes = asset.childObjects(of: MDLMesh.self) as? [MDLMesh] else {
-          fatalError()
-        }
-
-        // Add ortho Tan
-        mdlMeshes.forEach {
-          Model.addOrthoTan(to: $0)
-        }
-
-        // Load Meshes
-        let mtkMeshes = try mdlMeshes.map { mdlMesh in
-          return try MTKMesh(mesh: mdlMesh, device: device)
-        }
-        self.mesh = zip(mdlMeshes, mtkMeshes).map { ($1, $0) }
-
-        // Load Textures
-        let materials = mdlMeshes.flatMap {
-          ($0.submeshes as? [MDLSubmesh] ?? []).compactMap { $0.material }
-        }
-        
-        let allSemantics: [MDLMaterialSemantic] = [
-          .baseColor,
-          .emission,
-          .tangentSpaceNormal,
-          .roughness,
-          .metallic,
-          .ambientOcclusion
-        ]
-
-        materials.forEach { material in
-          allSemantics.forEach { semantic in
-            guard let key = material.key(for: semantic) else {
-              return
-            }
-            textures[key] = material.texture(for: semantic, library: shaderLibrary, loader: textureLoader)!
+      for (idx, submesh) in storageMesh.0.submeshes.enumerated() {
+        if useModelTextures {
+          if let sub = storageMesh.1.submeshes?[idx] as? MDLSubmesh,
+             let mat = sub.material {
+            setTextures(with: mat, encoder: encoder)
           }
         }
-      } catch {
-        fatalError("RenderModel Model Failure")
+
+        // Draw
+        let indexBuffer = submesh.indexBuffer
+        encoder.drawIndexedPrimitives(
+          type: submesh.primitiveType,
+          indexCount: submesh.indexCount,
+          indexType: submesh.indexType,
+          indexBuffer: indexBuffer.buffer,
+          indexBufferOffset: indexBuffer.offset
+        )
       }
     }
+  }
+  
+  // MARK: - Private
+  
+  private func loadMeshes(model: Model, geometryLibrary: MetalGeometryLibrary) throws -> [StorageMesh] {
+    let asset = try model.asset(device: device, allocator: geometryLibrary.allocator)
+    asset.loadTextures()
 
-    func draw(encoder: MTLRenderCommandEncoder, useModelTextures: Bool) {
-      for storageMesh in mesh {
-        for (i, buffer) in storageMesh.0.vertexBuffers.enumerated() {
-          encoder.setVertexBuffer(buffer.buffer, offset: buffer.offset, index: i)
-        }
-
-        for (idx, submesh) in storageMesh.0.submeshes.enumerated() {
-          if useModelTextures {
-            if let sub = storageMesh.1.submeshes?[idx] as? MDLSubmesh,
-               let mat = sub.material {
-              setTextures(with: mat, encoder: encoder)
-            }
-          }
-
-          // Draw
-          let indexBuffer = submesh.indexBuffer
-          encoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                        indexCount: submesh.indexCount,
-                                        indexType: submesh.indexType,
-                                        indexBuffer: indexBuffer.buffer,
-                                        indexBufferOffset: indexBuffer.offset)
-        }
-      }
+    guard let mdlMeshes = asset.childObjects(of: MDLMesh.self) as? [MDLMesh] else {
+      throw NSError(domain: "MDLAsset.childObjects", code: -1)
     }
 
-    func setTextures(with material: MDLMaterial, encoder: MTLRenderCommandEncoder) {
-      if let key = material.key(for: .baseColor),
-         let tex = textures[key] {
-        encoder.setFragmentTexture(tex, index: FragmentTextureIndex.baseColor.rawValue)
+    // Load Meshes
+    let mtkMeshes = try mdlMeshes.map { mdlMesh in
+      Model.addOrthoTan(to: mdlMesh)
+      return try MTKMesh(mesh: mdlMesh, device: device)
+    }
+    
+    return Array(zip(mtkMeshes, mdlMeshes))
+  }
+  
+  private func loadTextures(shaderLibrary: MetalShaderLibrary) {
+    // Load Textures
+    let materials = meshes.flatMap { _, mdl -> [MDLMaterial] in
+      guard let submeshes = mdl.submeshes as? [MDLSubmesh] else {
+        assertionFailure("unexpected type: \(String(describing: mdl.submeshes))")
+        return []
       }
+      return submeshes.compactMap(\.material)
+    }
 
-      if let key = material.key(for: .emission),
-         let tex = textures[key] {
-        encoder.setFragmentTexture(tex, index: FragmentTextureIndex.emission.rawValue)
+    materials.forEach { material in
+      supportedSemantics.forEach { semantic in
+        guard let key = material.key(for: semantic) else {
+          return
+        }
+        textures[key] = material.texture(for: semantic, library: shaderLibrary, loader: textureLoader)!
       }
-
-      if let key = material.key(for: .tangentSpaceNormal),
-         let tex = textures[key] {
-        encoder.setFragmentTexture(tex, index: FragmentTextureIndex.normal.rawValue)
+    }
+  }
+  
+  private func setTextures(with material: MDLMaterial, encoder: MTLRenderCommandEncoder) {
+    supportedSemantics.enumerated().forEach { index, semantic in
+      guard let key = material.key(for: semantic), let tex = textures[key] else {
+        return
       }
-
-      if let key = material.key(for: .roughness),
-         let tex = textures[key] {
-        encoder.setFragmentTexture(tex, index: FragmentTextureIndex.roughness.rawValue)
-      }
-
-      if let key = material.key(for: .metallic),
-         let tex = textures[key] {
-        encoder.setFragmentTexture(tex, index: FragmentTextureIndex.metalness.rawValue)
-      }
-
-      if let key = material.key(for: .ambientOcclusion),
-         let tex = textures[key] {
-        encoder.setFragmentTexture(tex, index: FragmentTextureIndex.occlusion.rawValue)
-      }
+      encoder.setFragmentTexture(tex, index: index)
     }
   }
 }
