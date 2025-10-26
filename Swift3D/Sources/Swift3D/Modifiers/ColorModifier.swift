@@ -18,13 +18,12 @@ public struct ColorModifier: NodeModifier {
   }
   
   public func drawCommands(content: any Node) -> [any MetalDrawable] {
-    content.drawCommands.map { [simdColor = color.components] drawCommand in
-      if var light = drawCommand as? PlaceLight {
+    content.drawCommands.forEach { [simdColor = color.components] drawCommand in
+      if let light = drawCommand as? PlaceLight {
         light.color = simd_float4(simdColor.xyz, intensity)
-        return light
       }
-      return drawCommand
     }
+    return content.drawCommands
   }
 }
 

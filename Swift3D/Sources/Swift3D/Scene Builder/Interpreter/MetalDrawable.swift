@@ -62,12 +62,9 @@ extension Array where Element == NodeTransition {
 
 extension Lerpable {
   func attribute(at time: Double, prev: Self?, animation: NodeTransition?) -> Self {
-    guard let animation = animation,
-          let prev = prev else {
+    guard let animation, let prev else {
       return self
     }
-
-    let percent = animation.interpolate(time: time)
-    return Self.lerp(prev, self, percent)
+    return Self.lerp(prev, self, animation.interpolate(time: time))
   }
 }

@@ -15,7 +15,7 @@ final class MetalScene3D {
   private let geometryLibrary: MetalGeometryLibrary
   private let contentFactory: () -> any Node
   
-  private var commands: [any MetalDrawable] = []
+  private var commands: [MetalDrawable] = []
     
   init(device: MTLDevice, shaderLibrary: MetalShaderLibrary, contentFactory: @escaping () -> any Node) {
     self.device = device
@@ -24,20 +24,20 @@ final class MetalScene3D {
     self.contentFactory = contentFactory
   }
   
-  func prepareCommands(surfaceAspect: Float, time: Double, invalidate: Bool) -> [any MetalDrawable] {
+  func prepareCommands(surfaceAspect: Float, time: Double, invalidate: Bool) -> [MetalDrawable] {
     if invalidate {
       commands = buildCommands(surfaceAspect: surfaceAspect)
     }
     
     // Update command values for GPU & Time (primarily used for transitions)
-    commands.forEach { command in
+    for command in commands {
       command.update(time: time)
     }
     
     return commands
   }
   
-  private func buildCommands(surfaceAspect: Float) -> [any MetalDrawable] {
+  private func buildCommands(surfaceAspect: Float) -> [MetalDrawable] {
     contentFactory().drawCommands.map { [commands] command in
       command.build(
         previous: commands.first { $0.id == command.id },

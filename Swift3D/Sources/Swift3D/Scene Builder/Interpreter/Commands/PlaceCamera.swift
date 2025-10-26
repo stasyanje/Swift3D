@@ -124,8 +124,10 @@ private extension PlaceCamera {
       self.projection = projection
       
       // Update uniform
-      let vpUniform = ViewProjectionUniform(projectionMatrix: projection, viewMatrix: view)
-      self.viewProjBuffer?.contents().storeBytes(of: vpUniform, as: ViewProjectionUniform.self)
+      viewProjBuffer?.contents().storeBytes(
+        of: ViewProjectionUniform(projectionMatrix: projection, viewMatrix: view),
+        as: ViewProjectionUniform.self
+      )
       
       // Skybox inverse view matrix.
       var viewDirectionMatrix = view

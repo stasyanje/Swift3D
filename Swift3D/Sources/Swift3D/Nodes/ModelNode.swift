@@ -12,21 +12,20 @@ import simd
 public struct ModelNode: Node, AcceptsShaderWithDefaultTextures {
   public let id: String
   public let url: URL
-  
-  public var drawCommands: [any MetalDrawable] { [command] }
-  
-  private let command: RenderModel
-  
+  public let drawCommands: [MetalDrawable]
+    
   public init(id: String, url: URL) {
     self.id = id
     self.url = url
-    self.command = RenderModel(
-      id: id,
-      transform: .identity,
-      model: Model(url: url),
-      shaderPipeline: .standard(albedo: Color.white),
-      overrideTextures: false,
-      animations: nil
-    )
+    self.drawCommands = [
+      RenderModel(
+        id: id,
+        transform: .identity,
+        model: Model(url: url),
+        shaderPipeline: .standard(albedo: Color.white),
+        overrideTextures: false,
+        animations: nil
+      )
+    ]
   }
 }
