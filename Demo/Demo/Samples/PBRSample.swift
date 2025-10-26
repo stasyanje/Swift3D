@@ -21,13 +21,13 @@ struct PBRSample: View {
         cameraController.update(delta: deltaTime)
         rotation += Float(deltaTime) * .pi / 5
       }) {
-        TouchCamera(controller: cameraController)
+        TouchCameraNode(controller: cameraController)
         lights
 
         ModelNode(id: "BlueTile", url: .model("BlueTile.usdz"))
           .shaded(.pbr)
       }
-      .withCameraControls(controller: cameraController)
+      .touchCamera(controller: cameraController)
 
       VStack {
         Text("⚡️ Dynamic Lighting + Physically Based Materials ⚡️")

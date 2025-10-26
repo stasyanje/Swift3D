@@ -23,9 +23,9 @@ struct ShapesSample: View {
   var body: some View {
     ZStack {
       Swift3DView {
-        TouchCamera(controller: cameraController, skybox: .skybox(.cube("stadiumEnv")))
+        TouchCameraNode(controller: cameraController, skybox: .skybox(.cube("stadiumEnv")))
       }
-      .withCameraControls(controller: cameraController)
+      .touchCamera(controller: cameraController)
       .frame(maxHeight: .infinity)
     }
 
@@ -36,7 +36,7 @@ struct ShapesSample: View {
             data.rotation += Float(delta)
             cameraController.update(delta: delta)
           }) {
-            TouchCamera(controller: cameraController,
+            TouchCameraNode(controller: cameraController,
                         skybox: .skybox())
             funLights
 
@@ -72,7 +72,7 @@ struct ShapesSample: View {
               .rotated(angle: data.rotation, axis: normalize(.up + .right))
               .translated(3 * .down + 2 * .right)
           }
-          .withCameraControls(controller: cameraController)
+          .touchCamera(controller: cameraController)
           .frame(maxHeight: .infinity)
       }
     }

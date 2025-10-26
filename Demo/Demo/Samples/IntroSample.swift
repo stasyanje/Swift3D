@@ -23,8 +23,10 @@ struct IntroSample: View {
               data.rotation += .pi * Float(delta)
               cameraController.update(delta: delta)
             }) {
-              TouchCamera(controller: cameraController,
-                          skybox: .skybox(low: .white, mid: .white, high: .white))
+              TouchCameraNode(
+                controller: cameraController,
+                skybox: .skybox(low: .white, mid: .white, high: .white)
+              )
               
               StandardLighting(id: "lights")
               
@@ -38,7 +40,7 @@ struct IntroSample: View {
                 .transform(.rotated(angle: data.rotation/2, axis: .right))
                 .transform(.translated(.down * 3))
             }
-            .withCameraControls(controller: cameraController)
+            .touchCamera(controller: cameraController)
             .padding()
             Text("👉 Drag to Pan")
             Text("👆 Tap to Zoom")

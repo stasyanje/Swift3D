@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B97C355A2EADAC17007B91E1 /* TouchCameraController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B97C35592EADAC17007B91E1 /* TouchCameraController.swift */; };
+		B97C355C2EADADB3007B91E1 /* TouchCameraGestureModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = B97C355B2EADADB3007B91E1 /* TouchCameraGestureModifier.swift */; };
 		EC1907ED299C25FA0011A21F /* IsometricSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC1907EC299C25FA0011A21F /* IsometricSample.swift */; };
 		EC2B342B29BBEB3F00168A95 /* Swift3D in Frameworks */ = {isa = PBXBuildFile; productRef = EC2B342A29BBEB3F00168A95 /* Swift3D */; };
 		EC2D46282996D13F004C9BC0 /* PageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2D46272996D13F004C9BC0 /* PageView.swift */; };
@@ -22,7 +24,7 @@
 		EC8F3D0629AD4A8A00566BC1 /* MetalTiles.usdz in Resources */ = {isa = PBXBuildFile; fileRef = EC8F3D0529AD4A8A00566BC1 /* MetalTiles.usdz */; };
 		ECAD987C2993138300B20F52 /* Textures.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ECAD987B2993138300B20F52 /* Textures.xcassets */; };
 		ECAD987F2993138D00B20F52 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECAD987D2993138D00B20F52 /* ContentView.swift */; };
-		ECAD98802993138D00B20F52 /* TouchCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECAD987E2993138D00B20F52 /* TouchCamera.swift */; };
+		ECAD98802993138D00B20F52 /* TouchCameraNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECAD987E2993138D00B20F52 /* TouchCameraNode.swift */; };
 		ECB1CFBA299D9C0000EFCF44 /* ShapesSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECB1CFB9299D9C0000EFCF44 /* ShapesSample.swift */; };
 		ECB1CFBC299DAA6D00EFCF44 /* IntroAnimationSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECB1CFBB299DAA6D00EFCF44 /* IntroAnimationSample.swift */; };
 		ECB1CFBE299EE2C100EFCF44 /* Spring.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECB1CFBD299EE2C100EFCF44 /* Spring.swift */; };
@@ -43,6 +45,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		B97C35592EADAC17007B91E1 /* TouchCameraController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchCameraController.swift; sourceTree = "<group>"; };
+		B97C355B2EADADB3007B91E1 /* TouchCameraGestureModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchCameraGestureModifier.swift; sourceTree = "<group>"; };
 		EC1907EC299C25FA0011A21F /* IsometricSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IsometricSample.swift; sourceTree = "<group>"; };
 		EC2D46272996D13F004C9BC0 /* PageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageView.swift; sourceTree = "<group>"; };
 		EC2D46292996D16D004C9BC0 /* IntroSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntroSample.swift; sourceTree = "<group>"; };
@@ -59,7 +63,7 @@
 		ECAD986D29930C4800B20F52 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		ECAD987B2993138300B20F52 /* Textures.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Textures.xcassets; sourceTree = "<group>"; };
 		ECAD987D2993138D00B20F52 /* ContentView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		ECAD987E2993138D00B20F52 /* TouchCamera.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TouchCamera.swift; sourceTree = "<group>"; };
+		ECAD987E2993138D00B20F52 /* TouchCameraNode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TouchCameraNode.swift; sourceTree = "<group>"; };
 		ECB1CFB9299D9C0000EFCF44 /* ShapesSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShapesSample.swift; sourceTree = "<group>"; };
 		ECB1CFBB299DAA6D00EFCF44 /* IntroAnimationSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntroAnimationSample.swift; sourceTree = "<group>"; };
 		ECB1CFBD299EE2C100EFCF44 /* Spring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Spring.swift; sourceTree = "<group>"; };
@@ -92,6 +96,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		B97C35582EADAB5E007B91E1 /* TouchCamera */ = {
+			isa = PBXGroup;
+			children = (
+				B97C355B2EADADB3007B91E1 /* TouchCameraGestureModifier.swift */,
+				ECAD987E2993138D00B20F52 /* TouchCameraNode.swift */,
+				B97C35592EADAC17007B91E1 /* TouchCameraController.swift */,
+			);
+			path = TouchCamera;
+			sourceTree = "<group>";
+		};
 		EC2D46262996D10C004C9BC0 /* Samples */ = {
 			isa = PBXGroup;
 			children = (
@@ -190,9 +204,9 @@
 		ECED42A629A956180003FF6C /* Controls */ = {
 			isa = PBXGroup;
 			children = (
+				B97C35582EADAB5E007B91E1 /* TouchCamera */,
 				EC2D462F2996FB15004C9BC0 /* StandardLighting.swift */,
 				ECB1CFBD299EE2C100EFCF44 /* Spring.swift */,
-				ECAD987E2993138D00B20F52 /* TouchCamera.swift */,
 				ECED42A729A956520003FF6C /* Motion.swift */,
 			);
 			path = Controls;
@@ -300,6 +314,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B97C355C2EADADB3007B91E1 /* TouchCameraGestureModifier.swift in Sources */,
 				ECAD987F2993138D00B20F52 /* ContentView.swift in Sources */,
 				ECED42BB29A965940003FF6C /* CodeModifier.swift in Sources */,
 				ECB1CFBE299EE2C100EFCF44 /* Spring.swift in Sources */,
@@ -309,9 +324,10 @@
 				EC8F3CFA29AD443000566BC1 /* PBRSample.swift in Sources */,
 				EC2D462A2996D16D004C9BC0 /* IntroSample.swift in Sources */,
 				EC2D46282996D13F004C9BC0 /* PageView.swift in Sources */,
-				ECAD98802993138D00B20F52 /* TouchCamera.swift in Sources */,
+				ECAD98802993138D00B20F52 /* TouchCameraNode.swift in Sources */,
 				EC6ADF852993089B0035E09A /* IntroApp.swift in Sources */,
 				ECB1CFC229A3D57600EFCF44 /* CowSample.swift in Sources */,
+				B97C355A2EADAC17007B91E1 /* TouchCameraController.swift in Sources */,
 				EC2D46302996FB15004C9BC0 /* StandardLighting.swift in Sources */,
 				EC2D462E2996D27B004C9BC0 /* URL+IO.swift in Sources */,
 				ECB78EBA29BBB97400774E33 /* SeatsSample.swift in Sources */,

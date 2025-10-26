@@ -1,16 +1,16 @@
 //
-//  CameraControlelr.swift
-//  Swift3D
+//  TouchCameraController.swift
+//  Demo
 //
-//  Created by Andrew Zimmer on 2/2/23.
+//  Created by Stanislav Kaliuzhnyi on 10/25/25.
 //
 
 import Foundation
-import SwiftUI
+import UIKit
 import Swift3D
 import simd
 
-class TouchCameraController {
+final class TouchCameraController {
   enum Zoom: Int {
     case max
     case mid
@@ -115,56 +115,5 @@ class TouchCameraController {
     else {
       zoom = .max
     }
-  }
-}
-
-// MARK: - Node
-
-struct TouchCamera<Skybox: MetalDrawable_Shader>: Node {
-  var id: String { "Camera Controller" }
-
-  let controller: TouchCameraController
-  let skybox: Skybox
-
-  init(controller: TouchCameraController,
-       skybox: Skybox = .skybox()) {
-    self.controller = controller
-    self.skybox = skybox
-  }
-
-  var body: some Node {
-    CameraNode(id: "Main Camera")
-      .skybox(skybox)
-      .transform(controller.transform)
-      .transition(.easeInOut(0.3))
-  }
-}
-
-// MARK: View Extensions for touch controls
-
-extension View {
-  func withCameraControls(controller: TouchCameraController) -> some View {
-    return self.modifier(TouchCameraGestureModifier(controller: controller))
-  }
-}
-
-struct TouchCameraGestureModifier: ViewModifier {
-  let controller: TouchCameraController
-  func body(content: Content) -> some View {
-    content
-    .highPriorityGesture(DragGesture(minimumDistance: 0)
-      .onChanged { gesture in
-        controller.touchMoved(startLocation: gesture.startLocation,
-                                    curLocation: gesture.location)
-
-      }
-      .onEnded({ gesture in
-        if (abs(gesture.predictedEndTranslation.width) + abs(gesture.predictedEndTranslation.height)) < 0.25 {
-          controller.touchTapped()
-        }
-
-        controller.touchEnded(predictedEndLocation: gesture.predictedEndLocation)
-      })
-    )
   }
 }
