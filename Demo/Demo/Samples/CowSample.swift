@@ -54,8 +54,8 @@ struct CowSample: View {
   }
 
   private var cubeScene: some View {
-    Swift3DView(updateLoop: { delta in
-      rotation += Float(delta) * .pi/4
+    Swift3DView(updateLoop: { frame in
+      rotation += Float(frame.deltaTime) * .pi/4
     }) {
       CameraNode(id: "mainCam")
         .translated(.back * 3)

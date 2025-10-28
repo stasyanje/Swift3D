@@ -22,23 +22,19 @@ struct ViewProjectionUniform {
 struct PlaceCamera: MetalDrawable {
   var id: String
   var transform: MetalDrawableData.Transform
-  var projection: CameraProjection
-  var shaderPipeline: (any MetalDrawable_Shader)?
   var animations: [NodeTransition]?
-  
+  var needsRender: Bool { shaderPipeline != nil }
+
+  let shaderPipeline: MetalDrawable_Shader?
+  var projection: CameraProjection
   var viewProjBuffer: MTLBuffer? { storage.viewProjBuffer }
   
   private let storage = PlaceCamera.Storage()
-}
+  
+  // MARK: - MetalDrawable
 
-// MARK: - Updates
-
-extension PlaceCamera {
-  var needsRender: Bool { shaderPipeline != nil }
-
-  // Render our skybox.
   func render(encoder: MTLRenderCommandEncoder, depthStencil: MTLDepthStencilState) {
-    guard let shaderPipeline = shaderPipeline else {
+    guard let shaderPipeline else {
       fatalError()
     }
 
@@ -55,26 +51,19 @@ extension PlaceCamera {
     encoder.endEncoding()
   }
 
-  var latestViewPoint: float4x4 { storage.view }
-  
   func update(time: CFTimeInterval) {
-    var previous: PlaceCamera.Storage? // TODO: restore passing previous
-    assert(previous == nil)
-
-    let view = transform.attribute(
-      at: time,
-      prev: previous?.view,
-      animation: animations?.with([.all])
+    storage.updateBuffers(
+      transform: transform.attribute(
+        at: time,
+        prev: storage.previousView,
+        animation: animations?.with([.all])
+      ),
+      projection: projection.matrix(aspect: storage.surfaceAspect).attribute(
+        at: time,
+        prev: storage.previousProjection,
+        animation: animations?.with([.all])
+      )
     )
-
-    let targetProj = projection.matrix(aspect: storage.surfaceAspect)
-    let projection = targetProj.attribute(
-      at: time,
-      prev: previous?.projection,
-      animation: animations?.with([.all])
-    )
-    
-    storage.updateBuffers(transform: view, projection: projection)
   }
   
   func build(
@@ -117,7 +106,13 @@ private extension PlaceCamera {
     var projection: float4x4?
     var skyboxInverseView: float4x4 = .identity
     
+    var previousView: float4x4?
+    var previousProjection: float4x4?
+    
     func updateBuffers(transform: MetalDrawableData.Transform, projection: float4x4) {
+      previousView = self.view
+      previousProjection = self.projection
+      
       // Update matrices
       self.view = transform
       let view = view.inverse

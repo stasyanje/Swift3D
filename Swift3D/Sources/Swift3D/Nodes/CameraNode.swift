@@ -63,9 +63,9 @@ public struct CameraNode: Node {
     self.command = PlaceCamera(
       id: id,
       transform: .identity,
-      projection: .perspective(.standard),
+      animations: nil,
       shaderPipeline: nil,
-      animations: nil
+      projection: .perspective(.standard)
     )
   }
 }

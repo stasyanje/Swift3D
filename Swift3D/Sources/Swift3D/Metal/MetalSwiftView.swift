@@ -15,14 +15,14 @@ public typealias Swift3DView = EquatableView<FreeSwift3DView>
 public extension Swift3DView {
   init(
     preferredFps: Int = 30,
-    updateLoop: ((_ deltaTime: Double) -> Void)? = nil,
-    @SceneBuilder _ content: @escaping () -> any Node
+    updateLoop: MetalView.Update? = nil,
+    @SceneBuilder contentFactory: @escaping MetalView.ContentFactory
   ) {
     self.init(
       content: FreeSwift3DView(
         preferredFps: preferredFps,
         updateLoop: updateLoop,
-        content
+        contentFactory
       )
     )
   }
@@ -30,16 +30,18 @@ public extension Swift3DView {
 
 // Prefer Swift3DView over inequtable view
 
-public struct FreeSwift3DView: UIViewRepresentable, Equatable {
-  let id = UUID()
-  let updateLoop: ((_ deltaTime: Double) -> Void)?
-  let preferredFps: Int
-  let content: () -> any Node
+public struct FreeSwift3DView: UIViewRepresentable, Equatable {  
+  // MARK: - State
   
-  public init(
+  let id = UUID()
+  let updateLoop: MetalView.Update?
+  let preferredFps: Int
+  let content: MetalView.ContentFactory
+  
+  init(
     preferredFps: Int,
-    updateLoop: ((_ deltaTime: Double) -> Void)?,
-    @SceneBuilder _ content: @escaping () -> any Node
+    updateLoop: MetalView.Update?,
+    @SceneBuilder _ content: @escaping MetalView.ContentFactory
   ) {
     self.updateLoop = updateLoop
     self.preferredFps = preferredFps

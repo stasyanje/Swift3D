@@ -19,9 +19,9 @@ struct IntroSample: View {
       ZStack {
         if is3D {
           VStack {
-            Swift3DView(updateLoop: { delta in
-              data.rotation += .pi * Float(delta)
-              cameraController.update(delta: delta)
+            Swift3DView(updateLoop: { frame in
+              data.rotation += .pi * Float(frame.deltaTime)
+              cameraController.update(delta: frame.deltaTime)
             }) {
               TouchCameraNode(
                 controller: cameraController,

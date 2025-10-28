@@ -32,9 +32,9 @@ struct ShapesSample: View {
     VStack {
       Text("🎁 Plenty of shapes to toy around with. ♦️")
       ZStack {
-          Swift3DView(updateLoop: { delta in
-            data.rotation += Float(delta)
-            cameraController.update(delta: delta)
+          Swift3DView(updateLoop: { frame in
+            data.rotation += Float(frame.deltaTime)
+            cameraController.update(delta: frame.deltaTime)
           }) {
             TouchCameraNode(controller: cameraController,
                         skybox: .skybox())

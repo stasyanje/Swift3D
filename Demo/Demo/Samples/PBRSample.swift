@@ -17,9 +17,9 @@ struct PBRSample: View {
 
   var body: some View {
     ZStack {
-      Swift3DView(updateLoop: { deltaTime in
-        cameraController.update(delta: deltaTime)
-        rotation += Float(deltaTime) * .pi / 5
+      Swift3DView(updateLoop: { frame in
+        cameraController.update(delta: frame.deltaTime)
+        rotation += Float(frame.deltaTime) * .pi / 5
       }) {
         TouchCameraNode(controller: cameraController)
         lights

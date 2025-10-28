@@ -16,42 +16,20 @@ struct IntroAnimationSample: View {
     static let offScreen = simd_float3(x: 0, y: -20, z: -40)
   }
   
-  @State private var fastSpring = Spring(target: Constants.offScreen, strength: 0.3, damper: 3)
-  @State private var slowSpring = Spring(target: Constants.offScreen, strength: 0.175, damper: 2.5)
+  private struct State {
+    var fastSpring = Spring(target: Constants.offScreen, strength: 0.3, damper: 3)
+    var slowSpring = Spring(target: Constants.offScreen, strength: 0.175, damper: 2.5)
 
-  @State private var rotation: Float = 0
-  @State private var show = false
+    var rotation: Float = 0
+    var show = false
+  }
+  
+  @SwiftUI.State private var state = State()
 
   var body: some View {
     VStack {
       ZStack {
-        Swift3DView(updateLoop: { delta in
-          let target = show ? Constants.onScreen : Constants.offScreen
-          slowSpring.target = target
-          fastSpring.target = target
-          
-          slowSpring.update(deltaTime: delta)
-          fastSpring.update(deltaTime: delta)
-
-          rotation += Float(delta) * .pi
-        }) {
-          CameraNode(id: "MainCamera")
-            .skybox(.skybox(low: .white, mid: .white, high: .white))
-            .translated(.back * 20)
-          FunLights(id: "lights")
-
-          ModelNode(id: "title", url: .model("title.obj"))
-            .shaded(.standard(albedo: Color(hex: 0x89CFF0)))
-            .overrideDefaultTextures()
-            .rotated(angle: slowSpring.value.x, axis: .up)
-            .translated(.up * fastSpring.value.y)
-
-          GeometryNode(id: "cube", shape: .octa(divisions: 0))
-            .shaded(.uvColored)
-            .scaled(.one * 1.5)
-            .rotated(angle: rotation, axis: .up)
-            .translated(.up * slowSpring.value.z)
-        }
+        swift3DView
         VStack(spacing: 16) {
           Text("Tap")
             .font(.largeTitle)
@@ -60,7 +38,7 @@ struct IntroAnimationSample: View {
           Divider()
           Text("for 🚀🚀🚀")
         }
-        .offset(CGSize(width: 0, height: show ? -UIScreen.main.bounds.height : 0))
+        .offset(CGSize(width: 0, height: state.show ? -UIScreen.main.bounds.height : 0))
       }
 
     }
@@ -69,9 +47,50 @@ struct IntroAnimationSample: View {
     .padding()
     .onTapGesture {
       withAnimation {
-        self.show.toggle()
+        self.state.show.toggle()
       }
     }
+  }
+  
+  // MARK: - Private
+  
+  private var swift3DView: some View {
+    Swift3DView(
+      updateLoop: reduce(frame:),
+      contentFactory: {
+        let state = state
+        
+        CameraNode(id: "MainCamera")
+          .skybox(.skybox(low: .white, mid: .white, high: .white))
+          .translated(.back * 20)
+        FunLights(id: "lights")
+        
+        ModelNode(id: "title", url: .model("title.obj"))
+          .shaded(.standard(albedo: Color(hex: 0x89CFF0)))
+          .overrideDefaultTextures()
+          .rotated(angle: state.slowSpring.value.x, axis: .up)
+          .translated(.up * state.fastSpring.value.y)
+        
+        GeometryNode(id: "cube", shape: .octa(divisions: 0))
+          .shaded(.uvColored)
+          .scaled(.one * 1.5)
+          .rotated(angle: state.rotation, axis: .up)
+          .translated(.up * state.slowSpring.value.z)
+      }
+    )
+  }
+  
+  private func reduce(frame: MetalView.Frame) {
+    let target = state.show ? Constants.onScreen : Constants.offScreen
+    let delta = frame.deltaTime
+    
+    state.slowSpring.target = target
+    state.fastSpring.target = target
+    
+    state.slowSpring.update(deltaTime: delta)
+    state.fastSpring.update(deltaTime: delta)
+    
+    state.rotation += Float(delta) * .pi
   }
 }
 

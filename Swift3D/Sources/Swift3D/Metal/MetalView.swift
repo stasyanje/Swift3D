@@ -6,20 +6,28 @@ import MetalKit
 
 public class MetalView: UIView {
   @available(*, unavailable) public required init?(coder: NSCoder) { nil }
+  public override class var layerClass: AnyClass { CAMetalLayer.self }
+  private var metalLayer: CAMetalLayer { layer as! CAMetalLayer }
+  
+  // MARK: - Type definitions
   
   private enum Error: Swift.Error {
     case deviceInit
   }
   
-  public override class var layerClass: AnyClass { CAMetalLayer.self }
-  private var metalLayer: CAMetalLayer { layer as! CAMetalLayer }
+  public struct Frame {
+    public let deltaTime: Double
+  }
+  
+  public typealias Update = (_ frame: Frame) -> Void
+  public typealias ContentFactory = () -> any Node
     
   private let renderer: MetalRenderer
   private let bufferFactory: MetalBufferFactory
   private let scene: MetalScene3D
   
   private let timelineLoop = TimelineLoop(fps: 60)
-  private let updateLoop: (_ deltaTime: Double) -> Void
+  private let updateLoop: (_ frame: Frame) -> Void
   
   private var lastUpdateTime = CACurrentMediaTime()
   private var preferredTimeBetweenUpdates = 0.0
@@ -28,8 +36,8 @@ public class MetalView: UIView {
   
   public init(
     preferredFps: Int,
-    updateLoop: @escaping (_ deltaTime: Double) -> Void,
-    contentFactory: @escaping () -> any Node
+    updateLoop: @escaping Update,
+    contentFactory: @escaping ContentFactory
   ) throws {
     guard let device = MTLCreateSystemDefaultDevice() else {
       throw Error.deviceInit
@@ -77,7 +85,7 @@ public class MetalView: UIView {
     
     if newFrame {
       lastUpdateTime = time
-      updateLoop(delta)
+      updateLoop(.init(deltaTime: delta))
     }
     
     let commands = scene.prepareCommands(
