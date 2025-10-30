@@ -29,7 +29,7 @@ public final class MetalShaderLibrary {
   }
   
   func pipeline(for vertex: String, fragment: String, vertexDescriptor: MTLVertexDescriptor? = nil) -> MTLRenderPipelineState {
-    let key = "\(vertex).\(fragment).\(String(describing:vertexDescriptor))"
+    let key = "\(vertex).\(fragment).\(vertexDescriptor?.hashValue ?? -1)"
     if let pipe = pipelines[key] {
       return pipe
     }
