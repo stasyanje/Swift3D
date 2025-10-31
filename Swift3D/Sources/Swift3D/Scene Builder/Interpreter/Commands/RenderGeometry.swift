@@ -20,20 +20,22 @@ protocol HasShaderPipeline {
 final class RenderGeometry: MetalDrawable, HasShaderPipeline {
   var id: String
   var transform: MetalDrawableData.Transform
-  let geometry: any MetalDrawable_Geometry
   var shaderPipeline: MetalDrawable_Shader
   let renderType: MetalDrawableData.RenderType?
   var animations: [NodeTransition]?
+  
+  let geometry: MetalDrawable_Geometry
+  
   let cullBackfaces: Bool
   
   private struct Storage {
     var transform: MetalDrawableData.Transform
+    var previousTransform: MetalDrawableData.Transform?
     var normalMatrix: float3x3 = float3x3(1)
     var mesh: MTKMesh?
   }
   
   private var storage: Storage
-  private var previousTransform: MetalDrawableData.Transform?
 
   init(
     id: String,
@@ -70,7 +72,10 @@ extension RenderGeometry {
     encoder.setCullMode(cullBackfaces ? .back : .none)    
     
     // Vertices
-    var bytes = VertexUniform(modelMatrix: storage.transform, normalMatrix: storage.normalMatrix)
+    var bytes = VertexUniform(
+      modelMatrix: storage.transform,
+      normalMatrix: storage.normalMatrix
+    )
     encoder.setVertexBytes(&bytes, length: MemoryLayout<VertexUniform>.size, index: 1)
     
     // Shaders and Uniforms
@@ -99,7 +104,7 @@ extension RenderGeometry {
   func update(time: CFTimeInterval) {
     storage.transform = LerpableTransform(value: transform).attribute(
       at: time,
-      prev: previousTransform.flatMap(LerpableTransform.init(value:)),
+      prev: storage.previousTransform.flatMap(LerpableTransform.init(value:)),
       animation: animations?.with([.all])
     ).value
   }
@@ -111,7 +116,7 @@ extension RenderGeometry {
     geometryLibrary: MetalGeometryLibrary,
     surfaceAspect: Float
   ) {
-    previousTransform = storage.transform
+    storage.previousTransform = storage.transform
 
     if let previous = (previous as? RenderGeometry)?.storage {
       storage.transform = previous.transform
