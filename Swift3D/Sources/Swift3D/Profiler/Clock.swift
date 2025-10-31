@@ -31,12 +31,13 @@ extension Profiler.Clock {
       }
       
       averageValues[id] = values
+
+      let averageString = string(
+        for: values.reduce(0, +) / Double(values.count { $0 > 0 }),
+        fractionDigits: equalFractionDigits
+      )
       
-      numberFormatter.maximumFractionDigits = equalFractionDigits
-      numberFormatter.minimumFractionDigits = equalFractionDigits
-      
-      let average = values.reduce(0, +) / Double(values.count { $0 > 0 })
-      print("average time \(numberFormatter.string(for: average)!)ms \(id)")
+      print("average time \(averageString) ms \(id)")
     }
   }
   
@@ -50,11 +51,50 @@ extension Profiler.Clock {
     
     return { [start = CACurrentMediaTime()] in
       let ms = (CACurrentMediaTime() - start) * 1000
-      print("single task \(description) -> \(ms)")
+      print("atomic task \(description) -> \(ms)")
       
       if maxMilliseconds > 0 {
         assert(ms <= maxMilliseconds, "\(description) \(ms) exceeded time limit: \(maxMilliseconds)")
       }
     }
+  }
+  
+  static func measureSteps(_ description: String) -> ((String) -> Void, () -> Void) {
+    guard enabled else {
+      return ({ _ in }, {})
+    }
+    
+    let start = CACurrentMediaTime()
+    
+    var steps: [Double] = []
+    var stepIDs: [String] = []
+    
+    let addStep = { (id: String) -> Void in
+      steps.append(CACurrentMediaTime())
+      stepIDs.append(id)
+    }
+    
+    let measure = { () -> Void in
+      let total = CACurrentMediaTime() - start
+      var current = start
+      
+      let descriptions = zip(steps, stepIDs).map { step, id in
+        let ratio = (step - current) / total
+        let string = string(for: ratio)
+        current = step
+        
+        return "\(id): \(string)"
+      }
+      print("stepped task \(description) -> \(string(for: total * 1000)) ms, \(descriptions.joined(separator: " "))")
+    }
+    
+    return (addStep, measure)
+  }
+  
+  private static func string(for value: Double, fractionDigits: Int = 2) -> String {
+    numberFormatter.maximumFractionDigits = fractionDigits
+    numberFormatter.minimumFractionDigits = fractionDigits
+    
+    return numberFormatter.string(for: value)!
   }
 }

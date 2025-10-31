@@ -39,6 +39,8 @@ final class MetalScene3D {
   
   private func buildCommands(surfaceAspect: Float) -> [MetalDrawable] {
     contentFactory().drawCommands.map { [commands] command in
+      let measure = Profiler.Clock.measureAverage("\(type(of: command)).build"); defer { measure() }
+      
       command.build(
         previous: commands.first { $0.id == command.id },
         device: device,

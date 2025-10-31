@@ -22,7 +22,7 @@ public class MetalView: UIView {
     public let deltaTime: Double
   }
   
-  public typealias Update = (_ frame: Frame) -> Void
+  public typealias Update = (Frame) -> Void
   public typealias ContentFactory = () -> any Node
     
   private let renderer: MetalRenderer
@@ -82,16 +82,15 @@ public class MetalView: UIView {
   // MARK: - Private
   
   private func render(time: CFTimeInterval) throws {
-    guard let drawable = metalLayer.nextDrawable() else {
-      return
-    }
-
     let delta = time - lastUpdateTime
     let newFrame = delta >= preferredTimeBetweenUpdates
+    
+    let (step, measure) = Profiler.Clock.measureSteps("MetalView.render \(newFrame)")
     
     if newFrame {
       lastUpdateTime = time
       updateLoop(.init(deltaTime: delta))
+      step("updateLoop")
     }
     
     let commands = scene.prepareCommands(
@@ -99,8 +98,17 @@ public class MetalView: UIView {
       time: time,
       invalidate: newFrame
     )
+    
+    step("prepareCommands")
+    
+    guard let drawable = metalLayer.nextDrawable() else {
+      return assertionFailure("unexpected")
+    }
 
     try renderer.render(time: time, layerDrawable: drawable, commands: commands)
+    
+    step("render")
+    measure()
   }
 }
 
@@ -140,3 +148,4 @@ private class TimelineLoop {
     }
   }
 }
+
