@@ -67,10 +67,13 @@ public class MetalView: UIView {
         fatalError(String(describing: error))
       }
     }
+    
+    Profiler.InstanceCount.increment(MetalView.self)
   }
   
   deinit {
     timelineLoop.stop()
+    Profiler.InstanceCount.decrement(MetalView.self)
   }
   
   // MARK: - Private

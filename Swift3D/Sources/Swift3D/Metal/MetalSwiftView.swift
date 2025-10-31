@@ -70,6 +70,5 @@ public struct FreeSwift3DView: UIViewRepresentable, Equatable {
 
   public func updateUIView(_ uiView: MetalView, context: Context) {
     // TODO: pass preferredFps
-    print("updateUIView \(context)")
   }
 }

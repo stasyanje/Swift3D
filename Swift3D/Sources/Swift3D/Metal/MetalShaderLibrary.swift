@@ -34,6 +34,8 @@ public final class MetalShaderLibrary {
       return pipe
     }
     
+    let measure = Profiler.Clock.measure("MetalShaderLibrary.makeRenderPipelineState \(key)"); defer { measure() }
+    
     let vertexProgram = library.makeFunction(name: vertex)
     let fragmentProgram = library.makeFunction(name: fragment)
 
