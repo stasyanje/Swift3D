@@ -5,6 +5,9 @@ import Metal
 import MetalKit
 
 public class MetalView: UIView {
+  
+  // MARK: - UIKit header
+  
   @available(*, unavailable) public required init?(coder: NSCoder) { nil }
   public override class var layerClass: AnyClass { CAMetalLayer.self }
   private var metalLayer: CAMetalLayer { layer as! CAMetalLayer }
@@ -29,8 +32,8 @@ public class MetalView: UIView {
   private let timelineLoop = TimelineLoop(fps: 60)
   private let updateLoop: (_ frame: Frame) -> Void
   
+  private let preferredTimeBetweenUpdates: Double
   private var lastUpdateTime = CACurrentMediaTime()
-  private var preferredTimeBetweenUpdates = 0.0
     
   // MARK: Setup / Teardown
   
@@ -68,12 +71,12 @@ public class MetalView: UIView {
       }
     }
     
-    Profiler.InstanceCount.increment(MetalView.self)
+    Profiler.Counter.increment(MetalView.self)
   }
   
   deinit {
     timelineLoop.stop()
-    Profiler.InstanceCount.decrement(MetalView.self)
+    Profiler.Counter.decrement(MetalView.self)
   }
   
   // MARK: - Private

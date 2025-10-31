@@ -1,15 +1,6 @@
 import Foundation
 import UIKit
 
-enum Profiler {
-  enum InstanceCount {}
-  enum Clock {}
-}
-
-@inline(__always) private func print(_ string: String) { Swift.print(string) }
-
-// MARK: - Clock
-
 extension Profiler.Clock {
   private static let numberFormatter = NumberFormatter()
   
@@ -21,6 +12,10 @@ extension Profiler.Clock {
     equalFractionDigits: Int = 4,
     assertLessThan maxMilliseconds: Double = 0.0
   ) -> () -> Void {
+    guard enabled else {
+      return {}
+    }
+    
     var values = averageValues[id] ?? .init(repeating: 0, count: count)
     let start = CACurrentMediaTime()
     
@@ -49,32 +44,17 @@ extension Profiler.Clock {
     _ description: String,
     assertLessThan maxMilliseconds: Double = 0
   ) -> () -> Void {
-    { [start = CACurrentMediaTime()] in
+    guard enabled else {
+      return {}
+    }
+    
+    return { [start = CACurrentMediaTime()] in
       let ms = (CACurrentMediaTime() - start) * 1000
-      print("Clock.Measure -> \(description) -> \(ms)")
+      print("single task \(description) -> \(ms)")
       
       if maxMilliseconds > 0 {
         assert(ms <= maxMilliseconds, "\(description) \(ms) exceeded time limit: \(maxMilliseconds)")
       }
     }
-  }
-}
-
-// MARK: - InstanceCount
-
-extension Profiler.InstanceCount {
-  private static var instancesCount: [AnyHashable: Int] = [:]
-  
-  static func increment<T: AnyObject>(_ type: T.Type) { addInstanceCount(+1, for: type) }
-  static func decrement<T: AnyObject>(_ type: T.Type) { addInstanceCount(-1, for: type) }
-  
-  private static func addInstanceCount<T: AnyObject>(_ count: Int, for type: T.Type) {
-    let id = String(describing: type)
-    
-    var current = instancesCount[id] ?? 0
-    current -= 1
-    instancesCount[id] = max(0, current)
-    
-    print("InstanceCount: \(id) -> \(current)")
   }
 }
