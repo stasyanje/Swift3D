@@ -27,24 +27,6 @@ public struct ShaderModifier: NodeModifier {
   }
 }
 
-public struct OverrideTexturesModifier: NodeModifier {
-  let override: Bool
-
-  public func printedTree(content: any Node) -> [String] {
-    content.printedTree
-  }
-
-  public func drawCommands(content: any Node) -> [any MetalDrawable] {
-    return content.drawCommands.map {
-      if var cmd = $0 as? RenderModel {
-        cmd.overrideTextures = override
-        return cmd
-      }
-      return $0
-    }
-  }
-}
-
 // MARK: - Node Extension
 
 public protocol AcceptsShader: Node {
@@ -59,16 +41,11 @@ extension AcceptsShader {
 
 public protocol AcceptsShaderWithDefaultTextures: Node {
   func shaded(_ shader: any MetalDrawable_Shader) -> ModifiedNodeContent<Self, ShaderModifier>
-  func overrideDefaultTextures() -> ModifiedNodeContent<Self, OverrideTexturesModifier>
 }
 
 extension AcceptsShaderWithDefaultTextures {
   public func shaded(_ shader: any MetalDrawable_Shader) -> ModifiedNodeContent<Self, ShaderModifier> {
     return self.modifier(ShaderModifier(shader: shader))
-  }
-  
-  public func overrideDefaultTextures() -> ModifiedNodeContent<Self, OverrideTexturesModifier> {
-    self.modifier(OverrideTexturesModifier(override: true))
   }
 }
 

@@ -14,17 +14,16 @@ public struct ModelNode: Node, AcceptsShaderWithDefaultTextures {
   public let url: URL
   public let drawCommands: [MetalDrawable]
     
-  public init(id: String, url: URL) {
+  public init(id: String, url: URL, overrideTextures: Bool = false) {
     self.id = id
     self.url = url
     self.drawCommands = [
       RenderModel(
         id: id,
         transform: .identity,
-        model: Model(url: url),
         shaderPipeline: .standard(albedo: Color.white),
-        overrideTextures: false,
-        animations: nil
+        animations: nil,
+        model: .url(url, overrideTextures: overrideTextures)
       )
     ]
   }

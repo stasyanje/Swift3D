@@ -11,9 +11,8 @@ import MetalKit
 import Metal
 import simd
 
-struct Triangle: MetalDrawable_Geometry {
-  var cacheKey: String { "Triangle" }
-  func get(device: MTLDevice, allocator: MTKMeshBufferAllocator) throws -> MTKMesh {
+extension MeshFactory {
+  func triangle(device: MTLDevice, allocator: MTKMeshBufferAllocator) throws -> MTKMesh {
     let vertices: [Vertex] = [
       .init(position: .init(x: 0, y: 0.5, z: 0), normal: .back, uv: simd_float2(0.5, 1)),
       .init(position: .init(x: -0.5, y: -0.5, z: 0), normal: .back, uv: simd_float2(0, 0)),
@@ -29,7 +28,7 @@ struct Triangle: MetalDrawable_Geometry {
     let asset = MDLMesh(vertexBuffer: vertexBuffer, vertexCount: 3,
                         descriptor: Vertex.descriptor,
                         submeshes: [.init(indexBuffer: indexBuffer, indexCount: 3, indexType: .uInt16, geometryType: MDLGeometryType.triangles, material: nil)])
-    Self.addOrthoTan(to: asset)
+    asset.addOrthoTan()
 
     return try MTKMesh(mesh: asset, device: device)
   }

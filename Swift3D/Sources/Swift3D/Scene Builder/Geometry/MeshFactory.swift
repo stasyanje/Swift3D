@@ -44,9 +44,21 @@ final class MeshFactory {
       .ambientOcclusion
     ]
   }
+  
+  func build(from primitive: Primitive) throws -> MTKMesh {
+    switch primitive {
+    case .capsule: try capsule(device: device, allocator: geometryLibrary.allocator)
+    case .cone: try cone(device: device, allocator: geometryLibrary.allocator)
+    case .cube: try cube(device: device, allocator: geometryLibrary.allocator)
+    case .cylinder: try cylinder(device: device, allocator: geometryLibrary.allocator)
+    case .octa(let divisions): try octahedron(device: device, allocator: geometryLibrary.allocator, divisions: divisions)
+    case .sphere: try sphere(device: device, allocator: geometryLibrary.allocator)
+    case .triangle: try triangle(device: device, allocator: geometryLibrary.allocator)
+    }
+  }
 
-  func build(model: Model) -> MeshCollection {
-    let meshes = try! loadMeshes(model: model)
+  func build(from url: URL) -> MeshCollection {
+    let meshes = try! loadMeshes(from: url)
     
     var textures: [MeshCollection.Material: MTLTexture] = [:]
     
@@ -71,10 +83,10 @@ final class MeshFactory {
         encoder.setVertexBuffer(buffer.buffer, offset: buffer.offset, index: i)
       }
 
-      for (idx, submesh) in mtk.submeshes.enumerated() {
+      for (submeshIndex, submesh) in mtk.submeshes.enumerated() {
         if useModelTextures {
           for (index, semantic) in supportedSemantics.enumerated() {
-            let material = (mdl.submeshes![idx] as! MDLSubmesh).material!
+            let material = (mdl.submeshes![submeshIndex] as! MDLSubmesh).material!
             if let key = material.property(with: semantic)?.key(), let tex = collection.textures[key] {
               encoder.setFragmentTexture(tex, index: index)
             }
@@ -96,14 +108,16 @@ final class MeshFactory {
   
   // MARK: - Private
   
-  private func loadMeshes(model: Model) throws -> [MeshCollection.StorageMesh] {
-    let asset = try model.asset(allocator: geometryLibrary.allocator)
+  private func loadMeshes(from url: URL) throws -> [MeshCollection.StorageMesh] {
+    assert(MDLAsset.canImportFileExtension(url.pathExtension))
+    
+    let asset = MDLAsset(url: url, vertexDescriptor: Vertex.descriptor, bufferAllocator: geometryLibrary.allocator)
     asset.loadTextures()
 
     let mdlMeshes = asset.childObjects(of: MDLMesh.self) as! [MDLMesh]
 
     let mtkMeshes = try mdlMeshes.map { mdlMesh in
-      Model.addOrthoTan(to: mdlMesh)
+      mdlMesh.addOrthoTan()
       return try MTKMesh(mesh: mdlMesh, device: device)
     }
     

@@ -9,9 +9,8 @@ import Foundation
 import ModelIO
 import MetalKit
 
-struct Capsule: MetalDrawable_Geometry {
-  var cacheKey: String { "Capsule_seg_16" }
-  func get(device: MTLDevice, allocator: MTKMeshBufferAllocator) throws -> MTKMesh {
+extension MeshFactory {
+  func capsule(device: MTLDevice, allocator: MTKMeshBufferAllocator) throws -> MTKMesh {
     let asset = MDLMesh(capsuleWithExtent: simd_float3(x: 1, y: 3, z: 1),
                         cylinderSegments: vector_uint2(16, 16),
                         hemisphereSegments: 16,
@@ -19,7 +18,7 @@ struct Capsule: MetalDrawable_Geometry {
                         geometryType: .triangles,
                         allocator: allocator)
     asset.vertexDescriptor = Vertex.descriptor
-    Self.addOrthoTan(to: asset)
+    asset.addOrthoTan()
     return try MTKMesh(mesh: asset, device: device)
   }
 }

@@ -65,9 +65,8 @@ struct IntroAnimationSample: View {
           .translated(.back * 20)
         FunLights(id: "lights")
         
-        ModelNode(id: "title", url: .model("title.obj"))
+        ModelNode(id: "title", url: .model("title.obj"), overrideTextures: true)
           .shaded(.standard(albedo: Color(hex: 0x89CFF0)))
-          .overrideDefaultTextures()
           .rotated(angle: state.slowSpring.value.x, axis: .up)
           .translated(.up * state.fastSpring.value.y)
         

@@ -9,20 +9,17 @@ import Foundation
 import Metal
 import MetalKit
 
-public protocol MetalDrawable_Geometry {
-  var cacheKey: String { get }
-  func get(device: MTLDevice, allocator: MTKMeshBufferAllocator) throws -> MTKMesh
-}
+extension MDLMesh {
+  func addOrthoTan() {
+    let hasTexCoords = vertexAttributeData(forAttributeNamed: MDLVertexAttributeTextureCoordinate) != nil
+    let hasNormals = vertexAttributeData(forAttributeNamed: MDLVertexAttributeNormal) != nil
 
-extension MetalDrawable_Geometry {
-  static func addOrthoTan(to mesh: MDLMesh) {
-    let hasTexCoords = mesh.vertexAttributeData(forAttributeNamed: MDLVertexAttributeTextureCoordinate) != nil
-    let hasNormals = mesh.vertexAttributeData(forAttributeNamed: MDLVertexAttributeNormal) != nil
-
-    if (hasTexCoords && hasNormals) {
-        mesh.addOrthTanBasis(forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
-                             normalAttributeNamed: MDLVertexAttributeNormal,
-                             tangentAttributeNamed: MDLVertexAttributeTangent)
+    if hasTexCoords && hasNormals {
+      addOrthTanBasis(
+        forTextureCoordinateAttributeNamed: MDLVertexAttributeTextureCoordinate,
+        normalAttributeNamed: MDLVertexAttributeNormal,
+        tangentAttributeNamed: MDLVertexAttributeTangent
+      )
     }
   }
 }

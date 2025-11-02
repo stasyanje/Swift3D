@@ -11,11 +11,8 @@ import MetalKit
 import Metal
 import simd
 
-struct Octahedron: MetalDrawable_Geometry {
-  var cacheKey: String { "Octahedron" }
-  let divisions: Int
-
-  func get(device: MTLDevice, allocator: MTKMeshBufferAllocator) throws -> MTKMesh {
+extension MeshFactory {
+  func octahedron(device: MTLDevice, allocator: MTKMeshBufferAllocator, divisions: Int) throws -> MTKMesh {
     let data = Self.create(for: divisions)
     let normalizedPos = data.0.map { normalize($0) }
 
@@ -35,7 +32,7 @@ struct Octahedron: MetalDrawable_Geometry {
     let asset = MDLMesh(vertexBuffer: vertexBuffer, vertexCount: vertices.count,
                         descriptor: Vertex.descriptor,
                         submeshes: [.init(indexBuffer: indexBuffer, indexCount: indices.count, indexType: .uInt16, geometryType: MDLGeometryType.triangles, material: nil)])
-    Self.addOrthoTan(to: asset)
+    asset.addOrthoTan()
 
     return try MTKMesh(mesh: asset, device: device)
   }
@@ -43,7 +40,7 @@ struct Octahedron: MetalDrawable_Geometry {
 
 // Grabbed Math from :
 // https://web.archive.org/web/20171218054621/http://www.binpress.com/tutorial/creating-an-octahedron-sphere/162
-extension Octahedron {
+extension MeshFactory {
   private static func normals(for positions: [simd_float3]) -> [simd_float3] {
     positions.map {
       normalize($0)

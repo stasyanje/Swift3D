@@ -11,9 +11,8 @@ import MetalKit
 import Metal
 import simd
 
-struct Cube: MetalDrawable_Geometry {
-  var cacheKey: String { "Cube" }
-  func get(device: MTLDevice, allocator: MTKMeshBufferAllocator) throws -> MTKMesh {
+extension MeshFactory {
+  func cube(device: MTLDevice, allocator: MTKMeshBufferAllocator) throws -> MTKMesh {
     let vertexBuffer = allocator.newBuffer(with: vertices.data,
                                            type: .vertex)
     let indexBuffer = allocator.newBuffer(with: indices.data,
@@ -23,7 +22,7 @@ struct Cube: MetalDrawable_Geometry {
                         descriptor: Vertex.descriptor,
                         submeshes: [.init(indexBuffer: indexBuffer, indexCount: 36, indexType: .uInt16, geometryType: MDLGeometryType.triangles, material: nil)])
 
-    Self.addOrthoTan(to: asset)
+    asset.addOrthoTan()
     return try MTKMesh(mesh: asset, device: device)
   }
 

@@ -9,26 +9,14 @@ import Foundation
 import simd
 
 public struct GeometryNode: Node, AcceptsShader {
-  public enum Shape {
-    case capsule
-    case cone
-    case cube
-    case cylinder
-    case octa(divisions: Int)
-    case sphere
-    case triangle
-  }
-  
   public let id: String
-  public let shape: Shape
   
   public var drawCommands: [any MetalDrawable] { [command] }
   
-  private let command: RenderGeometry
+  private let command: RenderModel
 
-  public init(id: String, shape: Shape) {
+  public init(id: String, shape: Primitive) {
     self.id = id
-    self.shape = shape
     
     let shaderPipeline: UnlitShader = switch shape {
     case .cone,
@@ -42,24 +30,11 @@ public struct GeometryNode: Node, AcceptsShader {
       UnlitShader(.white)
     }
     
-    let geometry: MetalDrawable_Geometry = switch shape {
-    case .capsule: Capsule()
-    case .cone: Cone()
-    case .cube: Cube()
-    case .cylinder: Cylinder()
-    case .octa(let divisions): Octahedron(divisions: divisions)
-    case .sphere: Sphere()
-    case .triangle: Triangle()
-    }
-    
-    self.command = RenderGeometry(
+    self.command = RenderModel(
       id: id,
       transform: .identity,
-      geometry: geometry,
       shaderPipeline: shaderPipeline,
-      renderType: .triangles,
-      animations: nil,
-      cullBackfaces: false
+      model: .primitive(shape)
     )
   }
 }
