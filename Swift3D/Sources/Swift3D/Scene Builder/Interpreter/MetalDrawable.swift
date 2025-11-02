@@ -33,7 +33,6 @@ public protocol MetalDrawable {
     previous: MetalDrawable?,
     device: MTLDevice,
     shaderLibrary: MetalShaderLibrary,
-    geometryLibrary: MetalGeometryLibrary,
     surfaceAspect: Float
   )
 }

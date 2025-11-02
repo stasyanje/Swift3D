@@ -12,7 +12,6 @@ import Metal
 final class MetalScene3D {
   private let device: MTLDevice
   private let shaderLibrary: MetalShaderLibrary
-  private let geometryLibrary: MetalGeometryLibrary
   private let contentFactory: () -> any Node
   
   private var commands: [MetalDrawable] = []
@@ -20,7 +19,6 @@ final class MetalScene3D {
   init(device: MTLDevice, shaderLibrary: MetalShaderLibrary, contentFactory: @escaping () -> any Node) {
     self.device = device
     self.shaderLibrary = shaderLibrary
-    self.geometryLibrary = MetalGeometryLibrary(device: device)
     self.contentFactory = contentFactory
   }
   
@@ -45,7 +43,6 @@ final class MetalScene3D {
         previous: commands.first { $0.id == command.id },
         device: device,
         shaderLibrary: shaderLibrary,
-        geometryLibrary: geometryLibrary,
         surfaceAspect: surfaceAspect
       )
       

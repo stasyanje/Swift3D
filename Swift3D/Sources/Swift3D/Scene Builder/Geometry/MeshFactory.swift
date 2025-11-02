@@ -19,19 +19,15 @@ struct MeshCollection {
 
 final class MeshFactory {
   private let device: MTLDevice
-  private let geometryLibrary: MetalGeometryLibrary
+  private let bufferAllocator: MTKMeshBufferAllocator
   private let shaderLibrary: MetalShaderLibrary
   private let textureLoader: MTKTextureLoader
   
   private let supportedSemantics: [MDLMaterialSemantic]
   
-  init(
-    device: MTLDevice,
-    geometryLibrary: MetalGeometryLibrary,
-    shaderLibrary: MetalShaderLibrary
-  ) {
+  init(device: MTLDevice, shaderLibrary: MetalShaderLibrary) {
     self.device = device
-    self.geometryLibrary = geometryLibrary
+    self.bufferAllocator = MTKMeshBufferAllocator(device: device)
     self.shaderLibrary = shaderLibrary
     self.textureLoader = MTKTextureLoader(device: device)
     
@@ -47,13 +43,13 @@ final class MeshFactory {
   
   func build(from primitive: Primitive) throws -> MTKMesh {
     switch primitive {
-    case .capsule: try capsule(device: device, allocator: geometryLibrary.allocator)
-    case .cone: try cone(device: device, allocator: geometryLibrary.allocator)
-    case .cube: try cube(device: device, allocator: geometryLibrary.allocator)
-    case .cylinder: try cylinder(device: device, allocator: geometryLibrary.allocator)
-    case .octa(let divisions): try octahedron(device: device, allocator: geometryLibrary.allocator, divisions: divisions)
-    case .sphere: try sphere(device: device, allocator: geometryLibrary.allocator)
-    case .triangle: try triangle(device: device, allocator: geometryLibrary.allocator)
+    case .capsule: try capsule(device: device, allocator: bufferAllocator)
+    case .cone: try cone(device: device, allocator: bufferAllocator)
+    case .cube: try cube(device: device, allocator: bufferAllocator)
+    case .cylinder: try cylinder(device: device, allocator: bufferAllocator)
+    case .octa(let divisions): try octahedron(device: device, allocator: bufferAllocator, divisions: divisions)
+    case .sphere: try sphere(device: device, allocator: bufferAllocator)
+    case .triangle: try triangle(device: device, allocator: bufferAllocator)
     }
   }
 
@@ -111,7 +107,7 @@ final class MeshFactory {
   private func loadMeshes(from url: URL) throws -> [MeshCollection.StorageMesh] {
     assert(MDLAsset.canImportFileExtension(url.pathExtension))
     
-    let asset = MDLAsset(url: url, vertexDescriptor: Vertex.descriptor, bufferAllocator: geometryLibrary.allocator)
+    let asset = MDLAsset(url: url, vertexDescriptor: Vertex.descriptor, bufferAllocator: bufferAllocator)
     asset.loadTextures()
 
     let mdlMeshes = asset.childObjects(of: MDLMesh.self) as! [MDLMesh]

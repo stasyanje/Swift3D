@@ -75,7 +75,6 @@ struct RenderModel: MetalDrawable, HasShaderPipeline {
     previous: MetalDrawable?,
     device: MTLDevice,
     shaderLibrary: MetalShaderLibrary,
-    geometryLibrary: MetalGeometryLibrary,
     surfaceAspect: Float
   ) {
     storage.previousTransform = storage.transform
@@ -87,18 +86,14 @@ struct RenderModel: MetalDrawable, HasShaderPipeline {
       storage.primitiveMesh = previous.primitiveMesh
       storage.meshCollection = previous.meshCollection
     } else {
-      let meshFactory = MeshFactory(
-        device: device,
-        geometryLibrary: geometryLibrary,
-        shaderLibrary: shaderLibrary
-      )
-      storage.meshFactory = meshFactory
+      let meshFactory = MeshFactory(device: device, shaderLibrary: shaderLibrary)
       switch model {
       case .primitive(let primitive):
         storage.primitiveMesh = try! meshFactory.build(from: primitive)
       case .url(let url, _):
         storage.meshCollection = meshFactory.build(from: url)
       }
+      storage.meshFactory = meshFactory
       storage.transform = transform
     }
     

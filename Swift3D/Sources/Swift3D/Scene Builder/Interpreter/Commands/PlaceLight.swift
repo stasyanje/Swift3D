@@ -63,7 +63,6 @@ extension PlaceLight {
     previous: MetalDrawable?,
     device: MTLDevice,
     shaderLibrary: MetalShaderLibrary,
-    geometryLibrary: MetalGeometryLibrary,
     surfaceAspect: Float
   ) {
     if let previous = previous as? PlaceLight {
