@@ -16,11 +16,13 @@ final class MeshAndTextureStorage {
   private typealias StorageMesh = (MTKMesh, MDLMesh)
   
   private let device: MTLDevice
-  private let supportedSemantics: [MDLMaterialSemantic]
-
-  private lazy var textureLoader = MTKTextureLoader(device: device)
+  private let geometryLibrary: MetalGeometryLibrary
+  private let shaderLibrary: MetalShaderLibrary
+  private let textureLoader: MTKTextureLoader
   
-  private var textures: [String: MTLTexture] = [:]
+  private let supportedSemantics: [MDLMaterialSemantic]
+  
+  private var textures: [MDLMaterialProperty.PropertyKey: MTLTexture] = [:]
   private var meshes: [StorageMesh] = []
 
   var vertexDescriptor: MTLVertexDescriptor? {
@@ -30,8 +32,11 @@ final class MeshAndTextureStorage {
     return nil
   }
   
-  init(device: MTLDevice) {
+  init(device: MTLDevice, geometryLibrary: MetalGeometryLibrary, shaderLibrary: MetalShaderLibrary) {
     self.device = device
+    self.geometryLibrary = geometryLibrary
+    self.shaderLibrary = shaderLibrary
+    self.textureLoader = MTKTextureLoader(device: device)
     
     self.supportedSemantics = [
       .baseColor,
@@ -43,28 +48,20 @@ final class MeshAndTextureStorage {
     ]
   }
 
-  func build(model: Model, geometryLibrary: MetalGeometryLibrary, shaderLibrary: MetalShaderLibrary) {
-    do {
-      meshes = try loadMeshes(model: model, geometryLibrary: geometryLibrary)
-    } catch {
-      fatalError("RenderModel Model Failure \(String(describing: error))")
-    }
-    
-    loadTextures(shaderLibrary: shaderLibrary)
+  func build(model: Model) {
+    meshes = try! loadMeshes(model: model)
+    loadTextures()
   }
 
   func draw(encoder: MTLRenderCommandEncoder, useModelTextures: Bool) {
-    for storageMesh in meshes {
-      for (i, buffer) in storageMesh.0.vertexBuffers.enumerated() {
+    for (mtk, mdl) in meshes {
+      for (i, buffer) in mtk.vertexBuffers.enumerated() {
         encoder.setVertexBuffer(buffer.buffer, offset: buffer.offset, index: i)
       }
 
-      for (idx, submesh) in storageMesh.0.submeshes.enumerated() {
+      for (idx, submesh) in mtk.submeshes.enumerated() {
         if useModelTextures {
-          if let sub = storageMesh.1.submeshes?[idx] as? MDLSubmesh,
-             let mat = sub.material {
-            setTextures(with: mat, encoder: encoder)
-          }
+          setTextures(with: (mdl.submeshes![idx] as! MDLSubmesh).material!, encoder: encoder)
         }
 
         // Draw
@@ -82,15 +79,12 @@ final class MeshAndTextureStorage {
   
   // MARK: - Private
   
-  private func loadMeshes(model: Model, geometryLibrary: MetalGeometryLibrary) throws -> [StorageMesh] {
-    let asset = try model.asset(device: device, allocator: geometryLibrary.allocator)
+  private func loadMeshes(model: Model) throws -> [StorageMesh] {
+    let asset = try model.asset(allocator: geometryLibrary.allocator)
     asset.loadTextures()
 
-    guard let mdlMeshes = asset.childObjects(of: MDLMesh.self) as? [MDLMesh] else {
-      throw NSError(domain: "MDLAsset.childObjects", code: -1)
-    }
+    let mdlMeshes = asset.childObjects(of: MDLMesh.self) as! [MDLMesh]
 
-    // Load Meshes
     let mtkMeshes = try mdlMeshes.map { mdlMesh in
       Model.addOrthoTan(to: mdlMesh)
       return try MTKMesh(mesh: mdlMesh, device: device)
@@ -99,32 +93,77 @@ final class MeshAndTextureStorage {
     return Array(zip(mtkMeshes, mdlMeshes))
   }
   
-  private func loadTextures(shaderLibrary: MetalShaderLibrary) {
-    // Load Textures
-    let materials = meshes.flatMap { _, mdl -> [MDLMaterial] in
-      guard let submeshes = mdl.submeshes as? [MDLSubmesh] else {
-        assertionFailure("unexpected type: \(String(describing: mdl.submeshes))")
-        return []
-      }
-      return submeshes.compactMap(\.material)
-    }
-
-    materials.forEach { material in
-      supportedSemantics.forEach { semantic in
-        guard let key = material.key(for: semantic) else {
-          return
+  private func loadTextures() {
+    for (_, mdl) in meshes {
+      for material in (mdl.submeshes as! [MDLSubmesh]).compactMap(\.material) {
+        for semantic in supportedSemantics {
+          if let property = material.property(with: semantic), let key = property.key() {
+            textures[key] = property.texture(library: shaderLibrary, loader: textureLoader)!
+          }
         }
-        textures[key] = material.texture(for: semantic, library: shaderLibrary, loader: textureLoader)!
       }
     }
   }
   
   private func setTextures(with material: MDLMaterial, encoder: MTLRenderCommandEncoder) {
-    supportedSemantics.enumerated().forEach { index, semantic in
-      guard let key = material.key(for: semantic), let tex = textures[key] else {
-        return
+    for (index, semantic) in supportedSemantics.enumerated() {
+      if let key = material.property(with: semantic)?.key(), let tex = textures[key] {
+        encoder.setFragmentTexture(tex, index: index)
       }
-      encoder.setFragmentTexture(tex, index: index)
     }
+  }
+}
+
+private extension MDLMaterialProperty {
+  enum PropertyKey: Hashable {
+    case color(simd_float4)
+    case texture(MDLMaterialSemantic, URL?)
+  }
+  
+  func key() -> PropertyKey? {
+    switch type {
+    case .float3, .float4, .color:
+      return .color(color())
+      
+    case .texture:
+      return .texture(semantic, urlValue!)
+      
+    default:
+      return nil
+    }
+  }
+
+  func texture(library: MetalShaderLibrary, loader: MTKTextureLoader) -> MTLTexture? {
+    switch type {
+    case .float3, .float4, .color:
+      return library.texture(color: color())
+
+    case .texture:
+      return try! loader.newTexture(texture: textureSamplerValue!.texture!, options: [
+        .textureUsage : MTLTextureUsage.shaderRead.rawValue,
+        .textureStorageMode : MTLStorageMode.private.rawValue,
+        .origin : MTKTextureLoader.Origin.bottomLeft.rawValue
+      ])
+    default:
+      return nil
+    }
+  }
+
+  private func color() -> simd_float4 {
+    switch type {
+    case .float4:
+      return simd_float4(float3Value, 1)
+    case .float3:
+      return float4Value
+    case .color:
+      let color = color ?? CGColor(red: 1, green: 1, blue: 1, alpha: 1)
+      if let components = color.components, color.numberOfComponents == 4 {
+        return simd_float4(Float(components[0]), Float(components[1]), Float(components[2]), Float(components[3]))
+      }
+    default:
+      break
+    }
+
+    return .zero
   }
 }

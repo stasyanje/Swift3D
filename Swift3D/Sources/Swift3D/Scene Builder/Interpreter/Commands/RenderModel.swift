@@ -56,12 +56,8 @@ struct RenderModel: MetalDrawable, HasShaderPipeline {
       storage.normalMatrix = previous.normalMatrix
       storage.meshAndTextures = previous.meshAndTextures
     } else {
-      storage.meshAndTextures = .init(device: device)
-      storage.meshAndTextures?.build(
-        model: model,
-        geometryLibrary: geometryLibrary,
-        shaderLibrary: shaderLibrary
-      )
+      storage.meshAndTextures = .init(device: device, geometryLibrary: geometryLibrary, shaderLibrary: shaderLibrary)
+      storage.meshAndTextures?.build(model: model)
       storage.transform = transform
     }
     
