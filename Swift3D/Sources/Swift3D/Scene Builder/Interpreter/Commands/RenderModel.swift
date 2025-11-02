@@ -27,7 +27,8 @@ struct RenderModel: MetalDrawable, HasShaderPipeline {
     var transform: MetalDrawableData.Transform = .identity
     var previousTransform: MetalDrawableData.Transform?
     var normalMatrix: float3x3 = float3x3(1)
-    var meshAndTextures: MeshAndTextureStorage?
+    var meshFactory: MeshFactory?
+    var meshCollection: MeshCollection?
   }
   
   private let storage = Storage()
@@ -54,17 +55,23 @@ struct RenderModel: MetalDrawable, HasShaderPipeline {
     if let previous = (previous as? RenderModel)?.storage {
       storage.transform = previous.transform
       storage.normalMatrix = previous.normalMatrix
-      storage.meshAndTextures = previous.meshAndTextures
+      storage.meshFactory = previous.meshFactory
+      storage.meshCollection = previous.meshCollection
     } else {
-      storage.meshAndTextures = .init(device: device, geometryLibrary: geometryLibrary, shaderLibrary: shaderLibrary)
-      storage.meshAndTextures?.build(model: model)
+      let meshFactory = MeshFactory(
+        device: device,
+        geometryLibrary: geometryLibrary,
+        shaderLibrary: shaderLibrary
+      )
+      storage.meshFactory = meshFactory
+      storage.meshCollection = meshFactory.build(model: model)
       storage.transform = transform
     }
     
     shaderPipeline.build(
       device: device,
       library: shaderLibrary,
-      descriptor: storage.meshAndTextures?.vertexDescriptor
+      descriptor: storage.meshCollection?.vertexDescriptor
     )
   }
   
@@ -86,7 +93,8 @@ struct RenderModel: MetalDrawable, HasShaderPipeline {
       shaderPipeline.setTextures(encoder: encoder)
     }
     
-    storage.meshAndTextures?.draw(
+    storage.meshFactory?.draw(
+      collection: storage.meshCollection!,
       encoder: encoder,
       useModelTextures: !overrideTextures
     )

@@ -1,20 +1,23 @@
-//
-//  MeshAndTextureStorage.swift
-//  Swift3D
-//
-//  Created by Stanislav Kaliuzhnyi on 10/31/25.
-//
-
-
 import Foundation
 import UIKit
 import Metal
 import MetalKit
 import simd
 
-final class MeshAndTextureStorage {
-  private typealias StorageMesh = (MTKMesh, MDLMesh)
+struct MeshCollection {
+  typealias StorageMesh = (MTKMesh, MDLMesh)
   
+  enum Material: Hashable {
+    case color(simd_float4)
+    case texture(MDLMaterialSemantic, URL?)
+  }
+  
+  let meshes: [StorageMesh]
+  let textures: [Material: MTLTexture]
+  let vertexDescriptor: MTLVertexDescriptor?
+}
+
+final class MeshFactory {
   private let device: MTLDevice
   private let geometryLibrary: MetalGeometryLibrary
   private let shaderLibrary: MetalShaderLibrary
@@ -22,17 +25,11 @@ final class MeshAndTextureStorage {
   
   private let supportedSemantics: [MDLMaterialSemantic]
   
-  private var textures: [MDLMaterialProperty.PropertyKey: MTLTexture] = [:]
-  private var meshes: [StorageMesh] = []
-
-  var vertexDescriptor: MTLVertexDescriptor? {
-    if let modelDesc = meshes.first?.0.vertexDescriptor {
-      return MTKMetalVertexDescriptorFromModelIO(modelDesc)
-    }
-    return nil
-  }
-  
-  init(device: MTLDevice, geometryLibrary: MetalGeometryLibrary, shaderLibrary: MetalShaderLibrary) {
+  init(
+    device: MTLDevice,
+    geometryLibrary: MetalGeometryLibrary,
+    shaderLibrary: MetalShaderLibrary
+  ) {
     self.device = device
     self.geometryLibrary = geometryLibrary
     self.shaderLibrary = shaderLibrary
@@ -48,20 +45,40 @@ final class MeshAndTextureStorage {
     ]
   }
 
-  func build(model: Model) {
-    meshes = try! loadMeshes(model: model)
-    loadTextures()
+  func build(model: Model) -> MeshCollection {
+    let meshes = try! loadMeshes(model: model)
+    
+    var textures: [MeshCollection.Material: MTLTexture] = [:]
+    
+    for (_, mdl) in meshes {
+      for material in (mdl.submeshes as! [MDLSubmesh]).compactMap(\.material) {
+        for semantic in supportedSemantics {
+          if let property = material.property(with: semantic), let key = property.key() {
+            textures[key] = property.texture(library: shaderLibrary, loader: textureLoader)!
+          }
+        }
+      }
+    }
+    
+    let descriptor = MTKMetalVertexDescriptorFromModelIO(meshes[0].0.vertexDescriptor)!
+    
+    return MeshCollection(meshes: meshes, textures: textures, vertexDescriptor: descriptor)
   }
 
-  func draw(encoder: MTLRenderCommandEncoder, useModelTextures: Bool) {
-    for (mtk, mdl) in meshes {
+  func draw(collection: MeshCollection, encoder: MTLRenderCommandEncoder, useModelTextures: Bool) {
+    for (mtk, mdl) in collection.meshes {
       for (i, buffer) in mtk.vertexBuffers.enumerated() {
         encoder.setVertexBuffer(buffer.buffer, offset: buffer.offset, index: i)
       }
 
       for (idx, submesh) in mtk.submeshes.enumerated() {
         if useModelTextures {
-          setTextures(with: (mdl.submeshes![idx] as! MDLSubmesh).material!, encoder: encoder)
+          for (index, semantic) in supportedSemantics.enumerated() {
+            let material = (mdl.submeshes![idx] as! MDLSubmesh).material!
+            if let key = material.property(with: semantic)?.key(), let tex = collection.textures[key] {
+              encoder.setFragmentTexture(tex, index: index)
+            }
+          }
         }
 
         // Draw
@@ -79,7 +96,7 @@ final class MeshAndTextureStorage {
   
   // MARK: - Private
   
-  private func loadMeshes(model: Model) throws -> [StorageMesh] {
+  private func loadMeshes(model: Model) throws -> [MeshCollection.StorageMesh] {
     let asset = try model.asset(allocator: geometryLibrary.allocator)
     asset.loadTextures()
 
@@ -92,35 +109,10 @@ final class MeshAndTextureStorage {
     
     return Array(zip(mtkMeshes, mdlMeshes))
   }
-  
-  private func loadTextures() {
-    for (_, mdl) in meshes {
-      for material in (mdl.submeshes as! [MDLSubmesh]).compactMap(\.material) {
-        for semantic in supportedSemantics {
-          if let property = material.property(with: semantic), let key = property.key() {
-            textures[key] = property.texture(library: shaderLibrary, loader: textureLoader)!
-          }
-        }
-      }
-    }
-  }
-  
-  private func setTextures(with material: MDLMaterial, encoder: MTLRenderCommandEncoder) {
-    for (index, semantic) in supportedSemantics.enumerated() {
-      if let key = material.property(with: semantic)?.key(), let tex = textures[key] {
-        encoder.setFragmentTexture(tex, index: index)
-      }
-    }
-  }
 }
 
 private extension MDLMaterialProperty {
-  enum PropertyKey: Hashable {
-    case color(simd_float4)
-    case texture(MDLMaterialSemantic, URL?)
-  }
-  
-  func key() -> PropertyKey? {
+  func key() -> MeshCollection.Material? {
     switch type {
     case .float3, .float4, .color:
       return .color(color())
