@@ -11,7 +11,19 @@ import MetalKit
 import UIKit
 import simd
 
-public final class MetalShaderLibrary {
+public protocol MetalShaderLibrary {
+  func pipeline(
+    for vertex: String,
+    fragment: String,
+    vertexDescriptor: MTLVertexDescriptor?
+  ) -> MTLRenderPipelineState
+    
+  func texture(color: simd_float4) -> MTLTexture
+  func texture(image: CGImage) -> MTLTexture
+  func cubeTexture(image: UIImage) -> MTLTexture
+}
+
+public final class MetalShaderLibraryImpl: MetalShaderLibrary {
   // TODO: Limit the size of this fella.
   private var pipelines: [String: MTLRenderPipelineState] = [:]
   private var colorTextures: [simd_float4: MTLTexture] = [:]
@@ -28,7 +40,7 @@ public final class MetalShaderLibrary {
     self.bufferFactory = bufferFactory
   }
   
-  func pipeline(for vertex: String, fragment: String, vertexDescriptor: MTLVertexDescriptor? = nil) -> MTLRenderPipelineState {
+  public func pipeline(for vertex: String, fragment: String, vertexDescriptor: MTLVertexDescriptor? = nil) -> MTLRenderPipelineState {
     let key = "\(vertex).\(fragment).\(vertexDescriptor?.hashValue ?? -1)"
     if let pipe = pipelines[key] {
       return pipe
@@ -57,7 +69,9 @@ public final class MetalShaderLibrary {
     }
   }
   
-  func texture(color: simd_float4) -> MTLTexture {
+  // MARK: - MetalShaderLibrary
+  
+  public func texture(color: simd_float4) -> MTLTexture {
     if let tex = colorTextures[color] {
       return tex
     }
@@ -67,7 +81,7 @@ public final class MetalShaderLibrary {
     return texture
   }
   
-  func texture(image: CGImage) -> MTLTexture {
+  public func texture(image: CGImage) -> MTLTexture {
     if let tex = imageTextures[image] {
       return tex
     }
@@ -77,7 +91,7 @@ public final class MetalShaderLibrary {
     return texture    
   }
 
-  func cubeTexture(image: UIImage) -> MTLTexture {
+  public func cubeTexture(image: UIImage) -> MTLTexture {
     if let tex = cubeTextures[image] {
       return tex
     }

@@ -30,49 +30,30 @@ struct VertexUniform {
 // MARK: - Textures
 
 public protocol MetalDrawable_Texture {
-  func mtlTexture(_ library: MetalShaderLibrary) -> MTLTexture?
+  func mtlTexture(_ library: MetalShaderLibrary) -> MTLTexture
 }
 
 extension Color: MetalDrawable_Texture {
-  public func mtlTexture(_ library: MetalShaderLibrary) -> MTLTexture? {
-    return library.texture(color: self.components)
+  public func mtlTexture(_ library: MetalShaderLibrary) -> MTLTexture {
+    library.texture(color: components)
   }
 }
 
 extension UIImage: MetalDrawable_Texture {
-  public func mtlTexture(_ library: MetalShaderLibrary) -> MTLTexture? {
-    guard let img = self.cgImage else {
-      fatalError()
-    }
-    return library.texture(image: img)
-  }
-}
-
-extension Optional<UIImage>: MetalDrawable_Texture {
-  public func mtlTexture(_ library: MetalShaderLibrary) -> MTLTexture? {
-    guard let img = self?.cgImage else {
-      fatalError()
-    }
-    return library.texture(image: img)
+  public func mtlTexture(_ library: MetalShaderLibrary) -> MTLTexture {
+    library.texture(image: cgImage!)
   }
 }
 
 public struct CubeMap: MetalDrawable_Texture {
-  public let image: String
+  public let imageName: String
+  
+  public init(imageName: String) {
+    self.imageName = imageName
+  }
 
-  public func mtlTexture(_ library: MetalShaderLibrary) -> MTLTexture? {
-    guard let img = UIImage(named: image) else {
-      fatalError()
-    }
-
-    return library.cubeTexture(image: img)
+  public func mtlTexture(_ library: MetalShaderLibrary) -> MTLTexture {
+    library.cubeTexture(image: UIImage(named: imageName)!)
   }
 }
-
-public extension MetalDrawable_Texture where Self == CubeMap {
-  static func cube(_ image: String) -> Self {
-    return Self(image: image)
-  }
-}
-
 

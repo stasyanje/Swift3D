@@ -23,7 +23,7 @@ struct ShapesSample: View {
   var body: some View {
     ZStack {
       Swift3DView {
-        TouchCameraNode(controller: cameraController, skybox: .skybox(.cube("stadiumEnv")))
+        TouchCameraNode(controller: cameraController, skybox: .skybox(CubeMap(imageName: "stadiumEnv")))
       }
       .touchCamera(controller: cameraController)
       .frame(maxHeight: .infinity)
@@ -36,46 +36,48 @@ struct ShapesSample: View {
             data.rotation += Float(frame.deltaTime)
             cameraController.update(delta: frame.deltaTime)
           }) {
-            TouchCameraNode(controller: cameraController,
-                        skybox: .skybox())
+            TouchCameraNode(controller: cameraController, skybox: .gradient())
             funLights
-
-            GeometryNode(id: "sphere", shape: .sphere)
-              .shaded(.uvColored)
-              .rotated(angle: data.rotation, axis: normalize(.up + .right))
-              .translated(3 * .up + 2 * .left)
-
-            GeometryNode(id: "cylinder", shape: .cylinder)
-              .shaded(.uvColored)
-              .rotated(angle: data.rotation, axis: normalize(.up + .right))
-              .translated(2 * .left)
-
-            GeometryNode(id: "cone", shape: .cone)
-              .shaded(.uvColored)
-              .rotated(angle: data.rotation, axis: normalize(.up + .right))
-              .translated(3 * .down + 2 * .left)
-
-            GeometryNode(id: "capsule", shape: .capsule)
-              .shaded(.uvColored)
-              .rotated(angle: data.rotation, axis: normalize(.up + .right))
-              .translated(3 * .up + 2 * .right)
-
-            GeometryNode(id: "cube", shape: .cube)
-              .shaded(.uvColored)
-              .scaled(.one * 1.5)
-              .rotated(angle: data.rotation, axis: normalize(.up + .right))
-              .translated(2 * (.right))
-
-            GeometryNode(id: "octahed", shape: .octa(divisions: 0))
-              .shaded(.uvColored)
-              .scaled(.one * 2.5)
-              .rotated(angle: data.rotation, axis: normalize(.up + .right))
-              .translated(3 * .down + 2 * .right)
+            node(for: .sphere)
+            node(for: .cylinder)
+            node(for: .cone)
+            node(for: .capsule)
+            node(for: .cube)
+            node(for: .octa(divisions: 0))
           }
           .touchCamera(controller: cameraController)
           .frame(maxHeight: .infinity)
       }
     }
+  }
+  
+  // MARK: - Private
+  
+  private func node(for primitive: Primitive) -> GeometryNode {
+    let translation: simd_float3 = switch primitive {
+    case .capsule: .up * 3 + 2 * .right
+    case .cone: 3 * .down + 2 * .left
+    case .cube: 2 * .right
+    case .cylinder: 2 * .left
+    case .octa: 3 * .down + 2 * .right
+    case .sphere: (3 * .up) + (2 * .left)
+    case .triangle: .zero
+    }
+    
+    let scale: simd_float3 = switch primitive {
+    case .cube: .one * 1.5
+    case .octa: .one * 2.5
+    case .capsule, .cone, .cylinder, .sphere, .triangle: .one
+    }
+    
+    let rotation: float4x4 = .rotated(angle: data.rotation, axis: normalize(.up + .right))
+    
+    return GeometryNode(
+      id: String(describing: primitive),
+      renderable: .primitive(primitive),
+      transform: rotation * .translated(translation) * .scaled(scale),
+      shader: .uvColored
+    )
   }
 
   private var funLights: some Node {

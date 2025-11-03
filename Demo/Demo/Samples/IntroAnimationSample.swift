@@ -60,21 +60,30 @@ struct IntroAnimationSample: View {
       contentFactory: {
         let state = state
         
-        CameraNode(id: "MainCamera")
-          .skybox(.skybox(low: .white, mid: .white, high: .white))
-          .translated(.back * 20)
+        CameraNode(
+          id: "MainCamera",
+          transform: .translated(.back * 20),
+          skyboxShader: .gradient()
+        )
+          
         FunLights(id: "lights")
         
-        ModelNode(id: "title", url: .model("title.obj"), overrideTextures: true)
-          .shaded(.standard(albedo: Color(hex: 0x89CFF0)))
-          .rotated(angle: state.slowSpring.value.x, axis: .up)
-          .translated(.up * state.fastSpring.value.y)
+        GeometryNode(
+          id: "title",
+          renderable: .url(.resource(at: "title.obj"), overrideTextures: true),
+          transform: .rotated(angle: state.slowSpring.value.x, axis: .up) *
+            .translated(.up * state.fastSpring.value.y),
+          shader: .standard(albedo: Color(hex: 0x89CFF0))
+        )
         
-        GeometryNode(id: "cube", shape: .octa(divisions: 0))
-          .shaded(.uvColored)
-          .scaled(.one * 1.5)
-          .rotated(angle: state.rotation, axis: .up)
-          .translated(.up * state.slowSpring.value.z)
+        GeometryNode(
+          id: "cube",
+          renderable: .primitive(.octa(divisions: 0)),
+          transform: .scaled(.one * 1.5) *
+            .rotated(angle: state.rotation, axis: .up) *
+            .translated(.up * state.slowSpring.value.z),
+          shader: .uvColored
+        )
       }
     )
   }

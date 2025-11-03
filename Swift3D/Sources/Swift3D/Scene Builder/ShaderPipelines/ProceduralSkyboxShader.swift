@@ -15,11 +15,17 @@ import simd
 // MARK: - Init Helper
 
 extension MetalDrawable_Shader where Self == ProceduralSkyboxShader {
-  public static func skybox(low: Color = Color(hex: 0x999999),
-                     mid: Color = Color(hex: 0xF9F9F9),
-                     high: Color = Color(hex: 0xcccccc)) -> ProceduralSkyboxShader {
-    let properties = ProceduralSkyboxShader.Properties(time: .zero, colLow: low.components, colMid: mid.components, colHigh: high.components)
-    return .init(storage: ProceduralSkyboxShader.Storage(properties: properties))
+  public static func gradient(
+    low: Color = Color(uiColor: .systemBackground),
+    mid: Color = Color(uiColor: .tertiarySystemBackground),
+    high: Color = Color(uiColor: .systemBackground)
+  ) -> ProceduralSkyboxShader {
+    ProceduralSkyboxShader(storage: .init(properties: .init(
+      time: .zero,
+      colLow: low.components,
+      colMid: mid.components,
+      colHigh: high.components
+    )))
   }
   
   public static func noSkybox() -> ProceduralSkyboxShader {
@@ -54,7 +60,13 @@ public struct ProceduralSkyboxShader: MetalDrawable_Shader {
     storage.properties = storage.properties.with(time: simd_float4(x: time, y: 0, z: 0, w: 0))
 
     encoder.setFragmentBytes(&storage.properties, length: MemoryLayout<Properties>.size, index: 2)
-    encoder.setRenderPipelineState(library.pipeline(for: functions.0, fragment: functions.1))
+    encoder.setRenderPipelineState(
+      library.pipeline(
+        for: functions.0,
+        fragment: functions.1,
+        vertexDescriptor: nil
+      )
+    )
   }
 }
 

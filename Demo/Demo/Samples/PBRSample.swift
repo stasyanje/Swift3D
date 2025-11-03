@@ -21,11 +21,13 @@ struct PBRSample: View {
         cameraController.update(delta: frame.deltaTime)
         rotation += Float(frame.deltaTime) * .pi / 5
       }) {
-        TouchCameraNode(controller: cameraController)
+        TouchCameraNode(controller: cameraController, skybox: .gradient())
         lights
-
-        ModelNode(id: "BlueTile", url: .model("BlueTile.usdz"))
-          .shaded(.pbr)
+        GeometryNode(
+          id: "BlueTile",
+          renderable: .url(.resource(at: "BlueTile.usdz")),
+          shader: .pbr
+        )
       }
       .touchCamera(controller: cameraController)
 
@@ -51,9 +53,12 @@ struct PBRSample: View {
         LightNode(id: "light", direction: .point)
           .colored(color: .white, intensity: 8)
 
-        GeometryNode(id: "sphere", shape: .sphere)
-          .shaded(.unlit(.white))
-          .scaled(.one * 0.1)
+        GeometryNode(
+          id: "sphere",
+          renderable: .primitive(.sphere),
+          transform: .scaled(.one * 0.1),
+          shader: .unlit(.white)
+        )
       }
       .translated(.up * 1.5)
       .rotated(angle: rotation, axis: .right)
@@ -62,9 +67,12 @@ struct PBRSample: View {
         LightNode(id: "light", direction: .point)
           .colored(color: .green, intensity: 8)
 
-        GeometryNode(id: "sphere", shape: .sphere)
-          .shaded(.unlit(.green))
-          .scaled(.one * 0.1)
+        GeometryNode(
+          id: "sphere",
+          renderable: .primitive(.sphere),
+          transform: .scaled(.one * 0.1),
+          shader: .unlit(.green)
+        )
       }
       .translated(.back * 1.5)
       .rotated(angle: rotation, axis: .up + .left)
@@ -73,9 +81,12 @@ struct PBRSample: View {
         LightNode(id: "light", direction: .point)
           .colored(color: .purple, intensity: 8)
 
-        GeometryNode(id: "sphere", shape: .sphere)
-          .shaded(.unlit(.purple))
-          .scaled(.one * 0.1)
+        GeometryNode(
+          id: "sphere",
+          renderable: .primitive(.sphere),
+          transform: .scaled(.one * 0.1),
+          shader: .unlit(.purple)
+        ) 
       }
       .translated(.forward * 1.5)
       .rotated(angle: -rotation, axis: .up + .right)

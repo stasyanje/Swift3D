@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 import simd
 
-struct OrthographicSettings {
+public struct OrthographicSettings {
   let left: Float
   let right: Float
   let top: Float
@@ -17,19 +17,30 @@ struct OrthographicSettings {
 
   let nearZ: Float
   let farZ: Float
-}
-
-struct PerspectiveSettings {
-  let fov: Float
-  let zNear: Float
-  let zFar: Float
-
-  static var standard: Self {
-    .init(fov: 1.0472, zNear: 0.1, zFar: 100)
+  
+  public init(viewSpace: CGRect, zNear: Float = 0.1, zFar: Float = 100) {
+    self.left = Float(viewSpace.minX)
+    self.right = Float(viewSpace.maxX)
+    self.top = Float(viewSpace.maxY)
+    self.bottom = Float(viewSpace.minY)
+    self.nearZ = zNear
+    self.farZ = zFar
   }
 }
 
-enum CameraProjection {
+public struct PerspectiveSettings {
+  let fov: Float
+  let zNear: Float
+  let zFar: Float
+  
+  public init(fov: Float = 1.0472, zNear: Float = 0.1, zFar: Float = 100) {
+    self.fov = fov
+    self.zNear = zNear
+    self.zFar = zFar
+  }
+}
+
+public enum CameraProjection {
   case orthographic(OrthographicSettings)
   case perspective(PerspectiveSettings)
 
@@ -58,44 +69,20 @@ public struct CameraNode: Node {
   
   private let command: PlaceCamera
   
-  public init(id: String) {
+  public init(
+    id: String,
+    transform: float4x4 = .identity,
+    projection: CameraProjection = .perspective(.init()),
+    animations: [NodeTransition]? = nil,
+    skyboxShader: MetalDrawable_Shader? = nil
+  ) {
     self.id = id
     self.command = PlaceCamera(
       id: id,
-      transform: .identity,
-      animations: nil,
-      shaderPipeline: nil,
-      projection: .perspective(.standard)
+      transform: transform,
+      animations: animations,
+      shaderPipeline: skyboxShader,
+      projection: projection
     )
   }
 }
-
-// MARK: -  Camera Modifier Support
-
-public protocol CameraNodeModifiable: Node {
-  func skybox(_ shader: any MetalDrawable_Shader) -> ModifiedNodeContent<Self, ShaderModifier>
-  func perspective(fov: Float, zNear: Float, zFar: Float) -> ModifiedNodeContent<Self, ProjectionModifier>
-  func orthographic(viewSpace: CGRect, zNear: Float, zFar: Float) -> ModifiedNodeContent<Self, ProjectionModifier>
-}
-
-extension CameraNodeModifiable {
-  public func skybox(_ shader: any MetalDrawable_Shader) -> ModifiedNodeContent<Self, ShaderModifier> {
-    return self.modifier(ShaderModifier(shader: shader))
-  }
-
-  public func perspective(fov: Float = 1.0472, zNear: Float = 0.1, zFar: Float = 100) -> ModifiedNodeContent<Self, ProjectionModifier> {
-    self.modifier(ProjectionModifier(value: .perspective(.init(fov: fov, zNear: zNear, zFar: zFar))))
-  }
-
-  public func orthographic(viewSpace: CGRect, zNear: Float = 0.1, zFar: Float = 100) -> ModifiedNodeContent<Self, ProjectionModifier> {
-    self.modifier(ProjectionModifier(value: .orthographic(.init(left: Float(viewSpace.minX),
-                                                                right: Float(viewSpace.maxX),
-                                                                top: Float(viewSpace.maxY),
-                                                                bottom: Float(viewSpace.minY),
-                                                                nearZ: zNear,
-                                                                farZ: zFar))))
-  }
-}
-
-extension CameraNode: CameraNodeModifiable { }
-extension ModifiedNodeContent: CameraNodeModifiable where Content: CameraNodeModifiable, Modifier: NodeModifier { }

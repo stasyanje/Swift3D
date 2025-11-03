@@ -8,12 +8,14 @@
 import Foundation
 
 extension URL {
-  static func model(_ path: String) -> URL {
-    let components = path.components(separatedBy: ".")
-    guard components.count == 2,
-          let url = Bundle.main.url(forResource: components[0], withExtension: components[1]) else {
-      fatalError()
-    }
-    return url
+  static func resource(at path: String) -> URL {
+    var components = URLComponents()
+    components.path = path
+    let url = components.url!
+    
+    return Bundle.main.url(
+      forResource: url.deletingPathExtension().lastPathComponent,
+      withExtension: url.pathExtension
+    )!
   }
 }

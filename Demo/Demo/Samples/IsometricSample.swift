@@ -40,24 +40,30 @@ struct IsometricSample: View {
             }
           }) {
             if is3D {
-              CameraNode(id: "zoomCamera")
-                .perspective()
-                .transform(perspectivePos.transform)
-                .transition(.easeOut(0.8))
+              CameraNode(
+                id: "zoomCamera",
+                transform: perspectivePos.transform,
+                projection: .perspective(.init()),
+                animations: [.easeOut(0.8)]
+              )
             } else {
-              CameraNode(id: "zoomCamera")
-                .orthographic(viewSpace: CGRect(x: -3, y: -3, width: 6, height: 6))
-                .translated(.back * 4)
-                .transition(.easeOut(0.3))
+              CameraNode(
+                id: "zoomCamera",
+                transform: .translated(.back * 4),
+                projection: .orthographic(.init(viewSpace: CGRect(x: -3, y: -3, width: 6, height: 6))),
+                animations: [.easeOut(0.3)]
+              )
             }
 
             StandardLighting(id: "lights")
 
             ForEach3D(pointCloud.points) { point in
-              GeometryNode(id: point.id, shape: .cube)
-                .shaded(.standard(albedo: Color.red))
-                .scaled(.one * 0.075)
-                .translated(point.position)
+              GeometryNode(
+                id: point.id,
+                renderable: .primitive(.cube),
+                transform: .scaled(.one * 0.075) * .translated(point.position),
+                shader: .standard(albedo: Color.red)
+              )
             }
           }
         }
@@ -95,19 +101,23 @@ struct IsometricSample: View {
 
   private func axis(id: String) -> some Node {
     GroupNode(id: id) {
-      GeometryNode(id: "X", shape: .cube)
+      GeometryNode(
+        id: "X",
+        renderable: .primitive(.cube),
+        transform: .translated(.right) * .scaled(simd_float3(x: 2, y: 0.15, z: 0.15))
+      )
 
-        .transform(.translated(.right))
-        .transform(.scaled(simd_float3(x: 2, y: 0.15, z: 0.15)))
+      GeometryNode(
+        id: "Y",
+        renderable: .primitive(.cube),
+        transform: .translated(.up) * .scaled(simd_float3(x: 0.15, y: 2, z: 0.15))
+      )
 
-      GeometryNode(id: "Y", shape: .cube)
-
-        .transform(.translated(.up))
-        .transform(.scaled(simd_float3(x: 0.15, y: 2, z: 0.15)))
-
-      GeometryNode(id: "Z", shape: .cube)
-        .transform(.translated(.forward))
-        .transform(.scaled(simd_float3(x: 0.15, y: 0.15, z: 2)))
+      GeometryNode(
+        id: "Z",
+        renderable: .primitive(.cube),
+        transform: .translated(.forward) * .scaled(simd_float3(x: 0.15, y: 0.15, z: 2))
+      )
     }
   }
 }

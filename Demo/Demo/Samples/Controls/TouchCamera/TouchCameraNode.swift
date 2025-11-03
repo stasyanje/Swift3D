@@ -7,22 +7,23 @@
 
 import Swift3D
 
-struct TouchCameraNode<Skybox: MetalDrawable_Shader>: Node {
+struct TouchCameraNode: Node {
   var id: String { "Camera Controller" }
 
   let controller: TouchCameraController
-  let skybox: Skybox
+  let skybox: MetalDrawable_Shader
 
-  init(controller: TouchCameraController, skybox: Skybox = .skybox()) {
+  init(controller: TouchCameraController, skybox: MetalDrawable_Shader) {
     self.controller = controller
     self.skybox = skybox
   }
 
   var body: some Node {
-    CameraNode(id: "Main Camera")
-      .skybox(skybox)
-      .transform(controller.transform)
-      .transition(.easeInOut(0.3))
+    CameraNode(
+      id: "Main Camera",
+      transform: controller.transform,
+      skyboxShader: skybox
+    )
   }
 }
 

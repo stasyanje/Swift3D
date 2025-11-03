@@ -25,20 +25,26 @@ struct IntroSample: View {
             }) {
               TouchCameraNode(
                 controller: cameraController,
-                skybox: .skybox(low: .white, mid: .white, high: .white)
+                skybox: .gradient(low: .white, mid: .white, high: .white)
               )
               
               StandardLighting(id: "lights")
               
-              ModelNode(id: "title", url: .model("title.obj"))
-                .shaded(.standard(albedo: Color.blue))
-                .translated(.down * 0.25)
+              GeometryNode(
+                id: "title",
+                renderable: .url(.resource(at: "title.obj")),
+                transform: .translated(.down * 0.25),
+                shader: .standard(albedo: Color.blue)
+              )
               
-              GeometryNode(id: "cube", shape: .cube)
-                .shaded(.uvColored)
-                .transform(.rotated(angle: data.rotation, axis: .up))
-                .transform(.rotated(angle: data.rotation/2, axis: .right))
-                .transform(.translated(.down * 3))
+              GeometryNode(
+                id: "cube",
+                renderable: .primitive(.cube),
+                transform: .rotated(angle: data.rotation, axis: .up) *
+                  .rotated(angle: data.rotation/2, axis: .right) *
+                  .translated(.down * 3),
+                shader: .uvColored
+              )
             }
             .touchCamera(controller: cameraController)
             .padding()

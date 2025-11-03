@@ -10,14 +10,12 @@ import simd
 
 public struct LightNode: Node, AcceptsColored {
   public let id: String
-  public let direction: LightDirection
   public var drawCommands: [any MetalDrawable] { [drawable] }
   
   private let drawable: PlaceLight
   
   public init(id: String, direction: LightDirection) {
     self.id = id
-    self.direction = direction
     self.drawable = PlaceLight(
       id: id,
       transform: .identity,

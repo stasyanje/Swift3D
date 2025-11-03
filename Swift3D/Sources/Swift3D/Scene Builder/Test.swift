@@ -21,13 +21,13 @@ public struct SceneBuilderTest {
     let tree = makeCode {
 
       ForEach3D(data: ["one", "two", "three"]) { element in
-        GeometryNode(id: element, shape: .triangle)
+        GeometryNode(id: element, renderable: .primitive(.triangle))
       }
 
       GroupNode(id: "one") {
-        GeometryNode(id: "tri1", shape: .triangle)
+        GeometryNode(id: "tri1", renderable: .primitive(.triangle))
       }
-      GeometryNode(id: "tris", shape: .triangle)
+      GeometryNode(id: "tris", renderable: .primitive(.triangle))
     }
 
     print("\n")

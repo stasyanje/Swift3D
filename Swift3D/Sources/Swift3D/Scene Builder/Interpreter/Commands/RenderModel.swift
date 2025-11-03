@@ -17,7 +17,7 @@ protocol HasShaderPipeline {
   var shaderPipeline: MetalDrawable_Shader { get set }
 }
 
-public enum Primitive {
+public enum Primitive: Hashable {
   case capsule
   case cone
   case cube
@@ -27,9 +27,9 @@ public enum Primitive {
   case triangle
 }
 
-enum Renderable {
+public enum Renderable {
   case primitive(Primitive)
-  case url(URL, overrideTextures: Bool)
+  case url(URL, overrideTextures: Bool = false)
 }
 
 struct RenderModel: MetalDrawable, HasShaderPipeline {

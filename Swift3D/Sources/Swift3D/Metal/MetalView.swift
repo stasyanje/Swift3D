@@ -49,7 +49,7 @@ public class MetalView: UIView {
     renderer = try MetalRenderer(device: device, bufferFactory: bufferFactory)
     scene = MetalScene3D(
       device: device,
-      shaderLibrary: try MetalShaderLibrary(device: device, bufferFactory: bufferFactory),
+      shaderLibrary: try MetalShaderLibraryImpl(device: device, bufferFactory: bufferFactory),
       contentFactory: contentFactory
     )
     

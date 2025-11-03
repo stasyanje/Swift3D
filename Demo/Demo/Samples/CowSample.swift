@@ -43,12 +43,17 @@ struct CowSample: View {
 
   private var cowScene: some View {
     Swift3DView {
-      CameraNode(id: "mainCam")
-        .perspective(fov: 1.5)
-        .translated(.up * 0.5 + .back * 1)
+      CameraNode(
+        id: "mainCam",
+        transform: .translated(.up * 0.5 + .back * 1),
+        projection: .perspective(.init(fov: 1.5))
+      )
       StandardLighting(id: "light")
-      ModelNode(id: "cow", url: .model("spot_triangulated.obj"))
-        .transform(motion.curAttitude)
+      GeometryNode(
+        id: "cow",
+        renderable: .url(.resource(at: "spot_triangulated.obj")),
+        transform: motion.curAttitude
+      )
     }
     .aspectRatio(1, contentMode: .fit)
   }
@@ -57,13 +62,14 @@ struct CowSample: View {
     Swift3DView(updateLoop: { frame in
       rotation += Float(frame.deltaTime) * .pi/4
     }) {
-      CameraNode(id: "mainCam")
-        .translated(.back * 3)
+      CameraNode(id: "mainCam", transform: .translated(.back * 3))
       FunLights(id: "funLights")
-      GeometryNode(id: "cube", shape: .cube)
-        .shaded(.uvColored)
-        .transform(.rotated(angle: rotation, axis: .up))
-        .transform(.rotated(angle: rotation/2, axis: .right))
+      GeometryNode(
+        id: "cube",
+        renderable: .primitive(.cube),
+        transform: .rotated(angle: rotation, axis: .up) * .rotated(angle: rotation/2, axis: .right),
+        shader: .uvColored
+      )
     }
     .frame(height: 150)
     .aspectRatio(1, contentMode: .fit)

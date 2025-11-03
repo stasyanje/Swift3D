@@ -6,35 +6,37 @@
 //
 
 import Foundation
+import SwiftUI
 import simd
 
-public struct GeometryNode: Node, AcceptsShader {
+public struct GeometryNode: Node {
   public let id: String
-  
-  public var drawCommands: [any MetalDrawable] { [command] }
-  
-  private let command: RenderModel
-
-  public init(id: String, shape: Primitive) {
-    self.id = id
+  public let transform: float4x4
+  public let drawCommands: [MetalDrawable]
     
-    let shaderPipeline: UnlitShader = switch shape {
-    case .cone,
-         .capsule,
-         .cylinder,
-         .octa,
-         .sphere,
-         .triangle:
-      UnlitShader(.red)
-    case .cube:
-      UnlitShader(.white)
+  public init(
+    id: String,
+    renderable: Renderable,
+    transform: float4x4 = .identity,
+    shader: MetalDrawable_Shader? = nil
+  ) {
+    self.id = id
+    self.transform = transform
+    
+    let shaderPipeline: MetalDrawable_Shader = switch renderable {
+    case .primitive(.cube): .unlit(.red)
+    case .primitive: .unlit(.white)
+    case .url: .standard(albedo: Color.white)
     }
     
-    self.command = RenderModel(
-      id: id,
-      transform: .identity,
-      shaderPipeline: shaderPipeline,
-      model: .primitive(shape)
-    )
+    self.drawCommands = [
+      RenderModel(
+        id: id,
+        transform: transform,
+        shaderPipeline: shader ?? shaderPipeline,
+        animations: nil,
+        model: renderable
+      )
+    ]
   }
 }

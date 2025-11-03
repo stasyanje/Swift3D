@@ -86,10 +86,11 @@ struct SeatsSample: View {
 
       ZStack {
         Swift3DView {
-          CameraNode(id: "main")
-            .skybox(.skybox(.cube("stadiumEnv")))
-            .rotated(angle: .pi, axis: .up)
-            .transform(motionActive ? motion.curCamAttidue : .identity)
+          CameraNode(
+            id: "main",
+            transform: .rotated(angle: .pi, axis: .up) * (motionActive ? motion.curCamAttidue : .identity),
+            skyboxShader: .skybox(CubeMap(imageName: "stadiumEnv"))
+          )
         }
         .blur(radius: motionActive ? 0 : 2)
         .background(.white, ignoresSafeAreaEdges: .all)
