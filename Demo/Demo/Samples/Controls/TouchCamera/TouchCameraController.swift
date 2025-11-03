@@ -17,7 +17,7 @@ final class TouchCameraController {
     case min
   }
 
-  var transform: float4x4 {
+  var transform: MetalTransform {
     .TRS(trans: .zero, rot: yQuat, scale: .one) *
     .rotated(angle: xAngle, axis: .right) *
     .TRS(trans: .back * curZoom, rot: .identity, scale: .one)

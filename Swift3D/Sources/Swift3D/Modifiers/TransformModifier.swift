@@ -9,7 +9,7 @@ import Foundation
 import simd
 
 public struct TransformModifier: NodeModifier {
-  let transform: MetalDrawableData.Transform
+  let transform: MetalTransform
   
   public func printedTree(content: any Node) -> [String] {
     content.printedTree
@@ -27,7 +27,7 @@ public struct TransformModifier: NodeModifier {
 // MARK: - Node Extension
 
 extension Node {
- public func transform(_ transform: float4x4) -> ModifiedNodeContent<Self, TransformModifier> {
+ public func transform(_ transform: MetalTransform) -> ModifiedNodeContent<Self, TransformModifier> {
    self.modifier(TransformModifier(transform: transform))
   }
 

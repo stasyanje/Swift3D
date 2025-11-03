@@ -34,15 +34,15 @@ public enum Renderable {
 
 struct RenderModel: MetalDrawable, HasShaderPipeline {
   var id: String
-  var transform: MetalDrawableData.Transform
+  var transform: MetalTransform
   var shaderPipeline: MetalDrawable_Shader
   var animations: [NodeTransition]?
   
   let model: Renderable
   
   private final class Storage {
-    var transform: MetalDrawableData.Transform = .identity
-    var previousTransform: MetalDrawableData.Transform?
+    var transform: MetalTransform = .identity
+    var previousTransform: MetalTransform?
     var normalMatrix: float3x3 = float3x3(1)
     var meshFactory: MeshFactory?
     

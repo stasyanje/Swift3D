@@ -21,7 +21,7 @@ struct ViewProjectionUniform {
 
 struct PlaceCamera: MetalDrawable {
   var id: String
-  var transform: MetalDrawableData.Transform
+  var transform: MetalTransform
   var animations: [NodeTransition]?
   var needsRender: Bool { shaderPipeline != nil }
 
@@ -101,14 +101,14 @@ private extension PlaceCamera {
     var surfaceAspect: Float = 1
     var viewProjBuffer: MTLBuffer?
 
-    var view: MetalDrawableData.Transform = .identity
+    var view: MetalTransform = .identity
     var projection: float4x4?
     var skyboxInverseView: float4x4 = .identity
     
     var previousView: float4x4?
     var previousProjection: float4x4?
     
-    func updateBuffers(transform: MetalDrawableData.Transform, projection: float4x4) {
+    func updateBuffers(transform: MetalTransform, projection: float4x4) {
       previousView = self.view
       previousProjection = self.projection
       

@@ -11,13 +11,13 @@ import simd
 
 public struct GeometryNode: Node {
   public let id: String
-  public let transform: float4x4
+  public let transform: MetalTransform
   public let drawCommands: [MetalDrawable]
     
   public init(
     id: String,
     renderable: Renderable,
-    transform: float4x4 = .identity,
+    transform: MetalTransform = .identity,
     shader: MetalDrawable_Shader? = nil
   ) {
     self.id = id

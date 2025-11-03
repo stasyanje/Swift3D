@@ -20,7 +20,7 @@ public enum LightDirection: Int {
 
 final class PlaceLight: MetalDrawable {
   var id: String
-  var transform: MetalDrawableData.Transform
+  var transform: MetalTransform
   let direction: LightDirection
   var color: simd_float4
   var animations: [NodeTransition]?
@@ -30,7 +30,7 @@ final class PlaceLight: MetalDrawable {
   
   init(
     id: String,
-    transform: MetalDrawableData.Transform,
+    transform: MetalTransform,
     direction: LightDirection,
     color: simd_float4,
     animations: [NodeTransition]?

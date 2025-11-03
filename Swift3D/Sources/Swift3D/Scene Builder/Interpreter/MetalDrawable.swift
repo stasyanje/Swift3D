@@ -10,18 +10,13 @@ import UIKit
 import Metal
 import simd
 
-// Used for data namespacing.
-public enum MetalDrawableData {}
-
-extension MetalDrawableData {
-  public typealias Transform = float4x4
-}
+public typealias MetalTransform = float4x4
 
 // MARK: - Metal Drawable
 
 public protocol MetalDrawable {
   var id: String { get set }
-  var transform: MetalDrawableData.Transform { get set }
+  var transform: MetalTransform { get set }
   var animations: [NodeTransition]? { get set }
   
   var needsRender: Bool { get }

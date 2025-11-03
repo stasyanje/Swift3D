@@ -130,7 +130,7 @@ extension IsometricSample {
     case left(Double)
     case right(Double)
 
-    var transform: float4x4 {
+    var transform: MetalTransform {
       switch self {
       case .center:
         return .translated(.back * 4)

@@ -71,7 +71,7 @@ public struct CameraNode: Node {
   
   public init(
     id: String,
-    transform: float4x4 = .identity,
+    transform: MetalTransform = .identity,
     projection: CameraProjection = .perspective(.init()),
     animations: [NodeTransition]? = nil,
     skyboxShader: MetalDrawable_Shader? = nil
