@@ -8,19 +8,24 @@
 import Foundation
 import simd
 
-public struct LightNode: Node, AcceptsColored {
+public struct LightNode: Node {
   public let id: String
   public var drawCommands: [any MetalDrawable] { [drawable] }
   
   private let drawable: PlaceLight
   
-  public init(id: String, direction: LightDirection) {
+  public init(
+    id: String,
+    direction: LightDirection,
+    transform: MetalTransform = .identity,
+    color: simd_float4 = .one,
+  ) {
     self.id = id
     self.drawable = PlaceLight(
       id: id,
-      transform: .identity,
+      transform: transform,
       direction: direction,
-      color: direction == .point ? simd_float4(1, 1, 1, 10) : .one,
+      color: color,
       animations: nil
     )
   }

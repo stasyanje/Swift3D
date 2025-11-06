@@ -82,14 +82,23 @@ struct ShapesSample: View {
 
   private var funLights: some Node {
     GroupNode(id: "lights") {
-      LightNode(id: "Ambient", direction: .ambient)
-        .colored(color: .white.opacity(0.15))
-      LightNode(id: "Directional", direction: .directional)
-        .colored(color: .orange.opacity(0.4))
-        .transform(.lookAt(eye: .zero, look: simd_float3(x: 0.5, y: 0.5, z: 0.5), up: .up))
-      LightNode(id: "Directional2", direction: .directional)
-        .colored(color: .blue.opacity(0.5))
-        .transform(.lookAt(eye: .zero, look: simd_float3(x: -0.5, y: -0.5, z: 0.5), up: .up))
+      LightNode(
+        id: "Ambient",
+        direction: .ambient,
+        color: simd_float4(1, 1, 1, 0.15)
+      )
+      LightNode(
+        id: "Directional",
+        direction: .directional,
+        transform: .lookAt(eye: .zero, look: simd_float3(x: 0.5, y: 0.5, z: 0.5), up: .up),
+        color: simd_float4(0.8, 0.4, 0.4, 0.4)
+      )
+      LightNode(
+        id: "Directional2",
+        direction: .directional,
+        transform: .lookAt(eye: .zero, look: simd_float3(x: -0.5, y: -0.5, z: 0.5), up: .up),
+        color: simd_float4(0.4, 0.4, 0.8, 0.5)
+      )
     }
   }
 }
@@ -99,4 +108,3 @@ private struct Preview: PreviewProvider {
     ShapesSample()
   }
 }
-

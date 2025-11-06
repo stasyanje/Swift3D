@@ -7,14 +7,12 @@
 
 import Foundation
 
-public struct ModifiedNodeContent<Content, Modifier> {
+public struct ModifiedNodeContent<Content: Node, Modifier: NodeModifier>: Node {
   var content: Content
   var modifier: Modifier
 }
 
-extension ModifiedNodeContent: Node where Content: Node, Modifier: NodeModifier {
-  public var id: String { "" }
-  
+extension ModifiedNodeContent {
   public var printedTree: [String] {
     modifier.printedTree(content: content)
   }

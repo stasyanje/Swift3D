@@ -7,26 +7,33 @@
 
 import Foundation
 
-public protocol Node {
-  associatedtype Body : Node
-  @SceneBuilder @MainActor var body: Self.Body { get }
-
-  var id: String { get }
+public protocol PrintableNode {
   var printedTree: [String] { get }
-  var drawCommands: [any MetalDrawable] { get }
 }
+
+public protocol DrawableNode {
+  var drawCommands: [MetalDrawable] { get }
+}
+
+public protocol Node: DrawableNode, PrintableNode {
+  associatedtype Body: Node
+  @SceneBuilder @MainActor var body: Body { get }
+}
+
+// MARK: - Defaults
 
 extension Node {
   public var body: some Node {
     self
   }
 
-  @MainActor public var drawCommands: [any MetalDrawable] {
-    
-    self.body.drawCommands
+  @MainActor public var drawCommands: [MetalDrawable] {
+    body.drawCommands
   }
+}
 
-  public var printedTree: [String] {
-    ["\(id):\(String(describing:type(of: self)))"]
+public extension PrintableNode {
+  var printedTree: [String] {
+    ["\(self):\(String(describing:type(of: self)))"]
   }
 }

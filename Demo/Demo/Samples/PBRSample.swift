@@ -46,12 +46,18 @@ struct PBRSample: View {
 
   private var lights: some Node {
     GroupNode(id: "Lights") {
-      LightNode(id: "ambient", direction: .ambient)
-        .colored(color: .white, intensity: 0.1)
+      LightNode(
+        id: "ambient",
+        direction: .ambient,
+        color: simd_float4(.one, 0.1)
+      )
 
       GroupNode(id: "White Light") {
-        LightNode(id: "light", direction: .point)
-          .colored(color: .white, intensity: 8)
+        LightNode(
+          id: "light",
+          direction: .point,
+          color: simd_float4(.one, 8)
+        )
 
         GeometryNode(
           id: "sphere",
@@ -64,8 +70,11 @@ struct PBRSample: View {
       .rotated(angle: rotation, axis: .right)
 
       GroupNode(id: "Green Light") {
-        LightNode(id: "light", direction: .point)
-          .colored(color: .green, intensity: 8)
+        LightNode(
+          id: "light",
+          direction: .point,
+          color: simd_float4(0.2, 0.8, 0.2, 8)
+        )
 
         GeometryNode(
           id: "sphere",
@@ -78,8 +87,11 @@ struct PBRSample: View {
       .rotated(angle: rotation, axis: .up + .left)
 
       GroupNode(id: "Red Light") {
-        LightNode(id: "light", direction: .point)
-          .colored(color: .purple, intensity: 8)
+        LightNode(
+          id: "light",
+          direction: .point,
+          color: simd_float4(0.2, 0.2, 0.8, 8)
+        )
 
         GeometryNode(
           id: "sphere",

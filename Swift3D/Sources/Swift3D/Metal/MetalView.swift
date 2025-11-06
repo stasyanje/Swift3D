@@ -30,7 +30,7 @@ public class MetalView: UIView {
   private let scene: MetalScene3D
   
   private let timelineLoop = TimelineLoop(fps: 60)
-  private let updateLoop: (_ frame: Frame) -> Void
+  private let updateLoop: (Frame) -> Void
   
   private let preferredTimeBetweenUpdates: Double
   private var lastUpdateTime = CACurrentMediaTime()
@@ -64,11 +64,7 @@ public class MetalView: UIView {
     metalLayer.contentsScale = UIScreen.main.scale
 
     timelineLoop.start { [weak self] frameTime in
-      do {
-        try self?.render(time: frameTime)
-      } catch {
-        fatalError(String(describing: error))
-      }
+      try! self?.render(time: frameTime)
     }
     
     Profiler.Counter.increment(MetalView.self)
