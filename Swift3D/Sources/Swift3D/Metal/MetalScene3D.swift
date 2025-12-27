@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import UIKit
 import Metal
 
 final class MetalScene3D {

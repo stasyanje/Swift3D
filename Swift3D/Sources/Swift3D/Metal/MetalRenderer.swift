@@ -1,7 +1,7 @@
 import Foundation
-import UIKit
 import Metal
 import simd
+import QuartzCore
 
 // MARK: - Renderer
 

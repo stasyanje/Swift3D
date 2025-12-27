@@ -1,5 +1,5 @@
 import Foundation
-import UIKit
+import QuartzCore
 import SwiftUI
 import Metal
 import MetalKit

@@ -8,7 +8,6 @@
 import Foundation
 import Metal
 import MetalKit
-import UIKit
 import simd
 
 public protocol MetalShaderLibrary {

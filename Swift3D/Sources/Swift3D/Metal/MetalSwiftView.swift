@@ -5,7 +5,6 @@
 //  Created by Andrew Zimmer on 1/18/23.
 //
 
-import UIKit
 import SwiftUI
 
 // Swift3DView + EquatableView

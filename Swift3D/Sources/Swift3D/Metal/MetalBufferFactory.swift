@@ -1,7 +1,6 @@
 import Foundation
 import Metal
 import MetalKit
-import UIKit
 import simd
 
 final class MetalBufferFactory {
